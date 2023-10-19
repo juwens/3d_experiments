@@ -1,0 +1,16 @@
+{
+  "name": "render_pipeline_no_gpu",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "serve": "npx serve bin",
+    "watch": "npx esbuild src/main.ts --bundle --watch --outfile=bin/main.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.19.5",
+    "serve": "^14.2.1",
+    "typescript": "^5.2.2"
+  }
+}
