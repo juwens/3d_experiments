@@ -2,15 +2,35 @@
   // src/models.ts
   var Cube = [
     // front
-    [0, 0, 0],
-    [0, 1, 0],
-    [1, 1, 0],
-    [1, 0, 0],
+    [-0.5, -0.5, -0.5],
+    [-0.5, 0.5, -0.5],
+    [0.5, 0.5, -0.5],
+    [0.5, -0.5, -0.5],
     // back
-    [1, 0, 1],
-    [1, 1, 1],
-    [0, 1, 1],
-    [0, 0, 1]
+    [0.5, -0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+    [-0.5, -0.5, 0.5],
+    // top
+    [-0.5, 0.5, -0.5],
+    [-0.5, 0.5, 0.5],
+    [0.5, 0.5, 0.5],
+    [0.5, 0.5, -0.5],
+    // bottom
+    [0.5, -0.5, -0.5],
+    [0.5, -0.5, 0.5],
+    [-0.5, -0.5, 0.5],
+    [-0.5, -0.5, -0.5],
+    // left
+    [-0.5, 0.5, -0.5],
+    [-0.5, -0.5, -0.5],
+    [-0.5, -0.5, 0.5],
+    [-0.5, 0.5, 0.5],
+    // right
+    [0.5, 0.5, 0.5],
+    [0.5, -0.5, 0.5],
+    [0.5, -0.5, -0.5],
+    [0.5, 0.5, -0.5]
   ];
   function load(vectors) {
     if (vectors.length % 4 !== 0) {
@@ -49,21 +69,29 @@
     }
     return res;
   }
-  function translate(dx, dy, dz) {
-    return [
-      [1, 0, 0, dx],
-      [0, 1, 0, dy],
-      [0, 0, 1, dz],
-      [0, 0, 0, 1]
-    ];
-  }
   var cos = Math.cos;
   var sin = Math.sin;
+  function rotateX(phi) {
+    return [
+      [1, 0, 0, 0],
+      [0, cos(phi), -sin(phi), 0],
+      [0, sin(phi), cos(phi), 0],
+      [0, 0, 0, 0]
+    ];
+  }
   function rotateY(phi) {
     return [
       [cos(phi), 0, sin(phi), 0],
       [0, 1, 0, 0],
       [-sin(phi), 0, cos(phi), 0],
+      [0, 0, 0, 0]
+    ];
+  }
+  function rotZ(phi) {
+    return [
+      [cos(phi), -sin(phi), 0, 0],
+      [sin(phi), cos(phi), 0, 0],
+      [0, 0, 1, 0],
       [0, 0, 0, 0]
     ];
   }
@@ -91,8 +119,9 @@
     let vectors = load(Cube);
     const phiDeg = timestamp / 100 % 360;
     const phiRad = rad(phiDeg);
-    vectors = transform(vectors, translate(-0.5, -0.5, -0.5));
     vectors = transform(vectors, rotateY(phiRad));
+    vectors = transform(vectors, rotateX(phiRad * 0.5));
+    vectors = transform(vectors, rotZ(phiRad * 0.1));
     context.clearRect(-2, -2, 4, 4);
     for (let i = 0; i < vectors.length; i += 3) {
       context.strokeStyle = "black";

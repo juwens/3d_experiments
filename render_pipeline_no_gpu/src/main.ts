@@ -26,8 +26,10 @@ function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D
     let vectors = load(Cube);
     const phiDeg = timestamp / 100 % 360;
     const phiRad = rad(phiDeg);
-    vectors = transform(vectors, translate(-0.5, -0.5, -0.5));
+    //vectors = transform(vectors, translate(-0.5, -0.5, -0.5));
     vectors = transform(vectors, rotateY(phiRad));
+    vectors = transform(vectors, rotateX(phiRad * 0.5));
+    vectors = transform(vectors, rotateZ(phiRad * 0.1));
 
     context.clearRect(-2, -2, 4, 4);
 
