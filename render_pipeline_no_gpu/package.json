@@ -10,5 +10,8 @@
   "devDependencies": {
     "esbuild": "^0.19.5",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "whatwg-fetch": "^3.6.19"
   }
 }

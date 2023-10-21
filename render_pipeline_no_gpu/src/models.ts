@@ -1,5 +1,44 @@
 import { Mat4, Vec3 } from "./math";
 
+export async function Teapot_3488_triangles(): Promise<Vec3[]> {
+    const vectors = await load3dObject("/models/teapot_bezier0.tris", 0.4);
+    return transform(vectors, translate(0,-0.5,0));
+}
+
+export async function Teapot_19480_triangles(): Promise<Vec3[]> {
+    const vectors = await load3dObject("/models/teapot_bezier1.tris", 0.4);
+    return transform(vectors, translate(0,-0.5,0));
+}
+
+export async function Teapot_145620_triangles(): Promise<Vec3[]> {
+    const vectors = await load3dObject("/models/teapot_bezier2.tris", 0.4);
+    return transform(vectors, translate(0,-0.5,0));
+}
+
+async function load3dObject(url : string, scale : number) {
+    const response = await fetch(url);
+    const lines = (await response.text()).split('\n');
+    
+    const res : Vec3[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const elements = line.split(' ');
+        
+        if (elements.length <= 1) {
+            continue;
+        }
+        
+        res.push([
+            parseFloat(elements[0]) * scale,
+            parseFloat(elements[1]) * scale,
+            parseFloat(elements[2]) * scale,
+        ]);
+    }
+
+    return res;
+}
+
 export function Cube(): Vec3[] {
     return quadsToTriangles([
         // front
@@ -84,6 +123,16 @@ export function transform(vecs: Vec3[], translation: Mat4): Vec3[] {
 
     return res;
 }
+
+export function scale(dx: number, dy: number, dz: number): Mat4 {
+    return [
+        [dx, 0, 0, 0],
+        [0, dy, 0, 0],
+        [0, 0, dz, 0],
+        [0, 0, 0, 1],
+    ];
+}
+
 
 export function translate(dx: number, dy: number, dz: number): Mat4 {
     return [

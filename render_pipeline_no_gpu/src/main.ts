@@ -1,5 +1,5 @@
 import { Triangle, Vector3 } from "./math";
-import { Cube, rotateX, rotateY, rotZ as rotateZ, transform, translate } from "./models";
+import { Cube, Teapot_145620_triangles, Teapot_19480_triangles, Teapot_3488_triangles, rotateX, rotateY, rotZ as rotateZ, scale, transform, translate } from "./models";
 import { hslToRgb } from "./color";
 
 new EventSource('/esbuild').addEventListener('change', () => location.reload());
@@ -20,28 +20,62 @@ document.addEventListener("DOMContentLoaded", event => {
     const scale = 0.45;
     context.scale(canvas.width * scale, canvas.height * scale);
     context.fillRect(-1, -1, 2, 2);
-    context.scale(1, -1);
+    //context.scale(1, -1);
     renderLoop(canvas, context);
 });
 
+class PerformanceCounter {
+    #frametimes: number[] = [];
+    #currentIdx: number = 0;
+    #maxIdx: number = 30;
+
+    addFrameTime(duration: number) {
+        if (this.#currentIdx === this.#maxIdx) {
+            this.#currentIdx = 0;
+        }
+        this.#frametimes[this.#currentIdx] = duration;
+        this.#currentIdx++;
+    }
+
+    mean() {
+        const sum = this.#frametimes.reduce((a, b) => a + b, 0);
+        return sum / this.#frametimes.length;
+    }
+
+    median() {
+        const sorted = this.#frametimes.sort();
+        return sorted[Math.floor(sorted.length / 2)];
+    }
+
+    fps() {
+        return 1000 / this.mean();
+    }
+
+    constructor() { }
+}
+
+const perf = new PerformanceCounter();
+
 const halfPi = Math.PI / 2;
 const quaterPi = Math.PI / 4;
-function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
+async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
     const start = performance.now();
     const wireframe = false;
     const lightDirection = Vector3.create([-1, -1, 1]);
     const viewingDirection = Vector3.create([0, 0, 1]);
 
-    let vectors = Cube();
+    let vectors = await Teapot_145620_triangles();
     const phiDeg = Date.now() / 100 % 360;
     const phiRad = rad(phiDeg);
+    vectors = transform(vectors, scale(1,-1,1));
     vectors = transform(vectors, rotateY(phiRad));
-    vectors = transform(vectors, rotateX(phiRad + 0.5));
-    vectors = transform(vectors, rotateZ(phiRad + 0.1));
+    //vectors = transform(vectors, rotateX(phiRad + 0.5));
+    //vectors = transform(vectors, rotateZ(phiRad + 0.1));
 
     context.clearRect(-2, -2, 4, 4);
 
     for (let i = 0; i < vectors.length; i += 3) {
+
         const v1 = vectors[i];
         const v2 = vectors[i + 1];
         const v3 = vectors[i + 2];
@@ -57,7 +91,7 @@ function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D
         const brightness = tr.normal().angle(lightDirection) / Math.PI / 2;
 
         context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`
-        
+
         context.beginPath();
         context.moveTo(vectors[i][0], vectors[i][1]);
         context.lineTo(vectors[i + 1][0], vectors[i + 1][1]);
@@ -74,9 +108,21 @@ function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D
     drawCrossbarWindow(context);
 
     const duration = performance.now() - start;
-    //console.log(duration.toPrecision(3));
+    perf.addFrameTime(duration);
 
-    setTimeout(() => renderLoop(canvas, context), 1);
+    drawFps(context);
+
+    setTimeout(() => renderLoop(canvas, context), 0);
+}
+
+function drawFps(context: CanvasRenderingContext2D) {
+    const fps = perf.fps().toFixed(0);
+
+    context.fillStyle = "black";
+    const lineHeight = 0.2;
+    context.font = `${lineHeight}px sans-serif`;
+    const metrics = context.measureText(fps);
+    context.fillText(fps, 1 - metrics.width - 0.05, -1 + lineHeight);
 }
 
 function rad(deg: number): number {
