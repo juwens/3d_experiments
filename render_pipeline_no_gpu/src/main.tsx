@@ -1,25 +1,87 @@
-import { Triangle, Vec3, Vector3, mean, median } from "./math";
+import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
+import { Triangle, Vec3, Vector3, mean, median, rad } from "./math";
 import { Cube, Teapot_150k, Teapot_19k, Teapot_3k, rotateX, rotateY, rotZ as rotateZ, scale, transform, translate } from "./models";
 import { delay } from "./util";
+import { createRoot } from 'react-dom/client';
+import * as uuid from "uuid";
+
+enum Models{
+    Cube,
+    TeapotLow,
+    TeapotMid,
+    TeapotHigh
+}
+
+const modelOptions = new Map();
+modelOptions.set(Models.Cube, { label: 'Cube', vectors: Cube });
+modelOptions.set(Models.TeapotLow, { label: 'Teapot low (3.5k triangles)', vectors: Teapot_3k });
+modelOptions.set(Models.TeapotMid, { label: 'Teapot mid (19k triangles)', vectors: Teapot_19k });
+modelOptions.set(Models.TeapotHigh, { label: 'Teapot high (150k triangles)', vectors: Teapot_150k });
+
+class RenderOptions {
+    constructor(public readonly initialModel : Models){
+        modelOptions.get(initialModel)
+            .vectors()
+            .then((x: Vec3[]) => this.loadedVectors = x);
+    }
+    wireframe: boolean = false;
+    lightDirection = Vector3.create([-1, -1, 1]);
+    viewingDirection = Vector3.create([0, 0, 1]);
+    loadedVectors: Vec3[] = [];
+}
+
+const renderOpts = new RenderOptions(Models.TeapotLow);
 
 new EventSource('/esbuild').addEventListener('change', () => location.reload());
 
 document.addEventListener("DOMContentLoaded", event => {
-    const appElm = document.getElementById("app");
-    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    const context: CanvasRenderingContext2D = canvas.getContext("2d")!;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    context.strokeStyle = "black";
-    context.fillStyle = "hotpink";
-    context.lineWidth = 1;
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    canvas.width = 600;
+    canvas.height = 600;
+    canvas.style.border = "2px black solid";
+    startRender(canvas);
 
-    context.translate(canvas.width / 2, canvas.height / 2);
-    const scale = 0.45;
-    context.scale(canvas.width * scale, canvas.height * scale);
-    context.fillRect(-1, -1, 2, 2);
-    renderLoop(canvas, context);
+    const root = createRoot(document.getElementById("app") as HTMLDivElement);
+    root.render(<>
+        <MyApp />
+    </>);
 });
+
+function MyApp() {
+    return (<>
+        <div style={{ width: 400 }}>
+            <label>
+                wireframe:
+                <input name="wireframe" type="checkbox" onChange={e => renderOpts.wireframe = !renderOpts.wireframe} />
+            </label>
+            <hr />
+            <ModelSelect />
+        </div>
+    </>);
+}
+
+function ModelSelect(){
+    const [model, SetModel] = useState(renderOpts.initialModel);
+
+    function onModelSelected(event){
+        const value = Number.parseInt(event.target.value);
+        SetModel(value);
+        const item = modelOptions.get(value);
+        item.vectors().then(x => renderOpts.loadedVectors = x);
+    }
+
+    return (
+        <label>model:
+        <select
+            value={model}
+            onChange={onModelSelected}>
+            {[...modelOptions].map(x => (
+                <option key={uuid.v4()} value={x[0]}>{x[1].label}</option>
+            ))}
+        </select>
+    </label>
+    )
+}
 
 class PerformanceCounter {
     #frametimes: { time: number, timestamp: number }[] = [];
@@ -52,36 +114,41 @@ class PerformanceCounter {
 
 const perf = new PerformanceCounter();
 
-let loadedVectors: Vec3[] = [];
-
-
-//Cube()
-    Teapot_3k()
-    .then(x => {
-        loadedVectors = [...x];
-    });
-
 const halfPi = Math.PI / 2;
 const quaterPi = Math.PI / 4;
 const frameCap = 30;
 const minFrameDuration = 1000 / frameCap;
 
-async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
-    const lightDirection = Vector3.create([-1, -1, 1]);
-    const viewingDirection = Vector3.create([0, 0, 1]);
+function startRender(canvas: HTMLCanvasElement) {
+    console.log("startRender()", canvas);
 
+    const context: CanvasRenderingContext2D = canvas.getContext("2d")!;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.strokeStyle = "black";
+    context.fillStyle = "hotpink";
+    context.lineWidth = 1;
+
+    context.translate(canvas.width / 2, canvas.height / 2);
+    const scale = 0.45;
+    context.scale(canvas.width * scale, canvas.height * scale);
+    context.fillRect(-1, -1, 2, 2);
+    renderLoop(canvas, context);
+}
+
+async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
     while (true) {
         const start = performance.now();
-        render(context, viewingDirection, lightDirection, { wireframe: false });
+        render(context, renderOpts);
         const duration = performance.now() - start;
         await delay(Math.max(0, minFrameDuration - duration));
     }
 }
 
-function render(context: CanvasRenderingContext2D, viewingDirection: Vector3, lightDirection: Vector3, options: { wireframe: boolean }) {
+function render(context: CanvasRenderingContext2D, options: RenderOptions) {
     const start = performance.now();
 
-    let vectors = [...loadedVectors];
+    let vectors = options.loadedVectors;
     const phiDeg = Date.now() / 100 % 360;
     const phiRad = rad(phiDeg);
     vectors = transform(vectors, scale(1, -1, 1));
@@ -100,14 +167,14 @@ function render(context: CanvasRenderingContext2D, viewingDirection: Vector3, li
         const v3 = vectors[i + 2];
 
         const tr = Triangle.create(v1, v2, v3);
-        const angleToView = tr.normal().angle(viewingDirection);
+        const angleToView = tr.normal().angle(options.viewingDirection);
 
         // culling
         if (!options.wireframe && angleToView < halfPi) {
             continue;
         }
 
-        const brightness = tr.normal().angle(lightDirection) / Math.PI / 2;
+        const brightness = tr.normal().angle(options.lightDirection) / Math.PI / 2;
 
         context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`;
 
@@ -143,14 +210,6 @@ function drawPerfStats(context: CanvasRenderingContext2D) {
         const metrics = context.measureText(text);
         context.fillText(text, 1 - metrics.width - 0.05, -1 + (lineHeight * line));
     }
-}
-
-function rad(deg: number): number {
-    return deg / 360 * Math.PI * 2;
-}
-
-function deg(rad: number): number {
-    return rad / Math.PI / 2 * 360;
 }
 
 function drawCrossbarWindow(context: CanvasRenderingContext2D) {

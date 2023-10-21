@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "npx esbuild src/main.ts --bundle --watch --outfile=bin/main.js --servedir=bin"
+    "dev": "npx esbuild src/main.tsx --bundle --watch --outfile=bin/main.js --servedir=bin"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +12,11 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@types/react": "^18.2.31",
+    "@types/react-dom": "^18.2.14",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "uuid": "^9.0.1",
     "whatwg-fetch": "^3.6.19"
   }
 }

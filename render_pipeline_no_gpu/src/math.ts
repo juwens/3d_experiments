@@ -82,3 +82,11 @@ export function median(list : number[]) {
     const sorted = list.sort();
     return sorted[Math.floor(sorted.length / 2)];
 }
+
+export function rad(deg: number): number {
+    return deg / 360 * Math.PI * 2;
+}
+
+export function deg(rad: number): number {
+    return rad / Math.PI / 2 * 360;
+}
