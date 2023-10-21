@@ -1,4 +1,4 @@
-import { Triangle, Vector3 } from "./math";
+import { Triangle, Vec3, Vector3 } from "./math";
 import { Cube, Teapot_145620_triangles, Teapot_19480_triangles, Teapot_3488_triangles, rotateX, rotateY, rotZ as rotateZ, scale, transform, translate } from "./models";
 import { hslToRgb } from "./color";
 
@@ -56,6 +56,16 @@ class PerformanceCounter {
 
 const perf = new PerformanceCounter();
 
+let loadedVectors: Vec3[] = [];
+
+
+Teapot_3488_triangles()
+    //Teapot_19480_triangles()
+    //Teapot_145620_triangles()
+    .then(x => {
+        loadedVectors = [...x];
+    });
+
 const halfPi = Math.PI / 2;
 const quaterPi = Math.PI / 4;
 async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
@@ -64,13 +74,15 @@ async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingCon
     const lightDirection = Vector3.create([-1, -1, 1]);
     const viewingDirection = Vector3.create([0, 0, 1]);
 
-    let vectors = await Teapot_145620_triangles();
+    let vectors = [...loadedVectors];
     const phiDeg = Date.now() / 100 % 360;
     const phiRad = rad(phiDeg);
-    vectors = transform(vectors, scale(1,-1,1));
+    vectors = transform(vectors, scale(1, -1, 1));
     vectors = transform(vectors, rotateY(phiRad));
     //vectors = transform(vectors, rotateX(phiRad + 0.5));
     //vectors = transform(vectors, rotateZ(phiRad + 0.1));
+    vectors = transform(vectors, rotateX(-0.3));
+    vectors = transform(vectors, rotateZ(0));
 
     context.clearRect(-2, -2, 4, 4);
 
@@ -111,8 +123,7 @@ async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingCon
     perf.addFrameTime(duration);
 
     drawFps(context);
-
-    setTimeout(() => renderLoop(canvas, context), 0);
+    setTimeout(() => renderLoop(canvas, context));
 }
 
 function drawFps(context: CanvasRenderingContext2D) {
