@@ -1,16 +1,16 @@
 import { Mat4, Vec3 } from "./math";
 
-export async function Teapot_3488_triangles(): Promise<Vec3[]> {
+export async function Teapot_3k(): Promise<Vec3[]> {
     const vectors = await load3dObject("/models/teapot_bezier0.tris", 0.4);
     return transform(vectors, translate(0,-0.5,0));
 }
 
-export async function Teapot_19480_triangles(): Promise<Vec3[]> {
+export async function Teapot_19k(): Promise<Vec3[]> {
     const vectors = await load3dObject("/models/teapot_bezier1.tris", 0.4);
     return transform(vectors, translate(0,-0.5,0));
 }
 
-export async function Teapot_145620_triangles(): Promise<Vec3[]> {
+export async function Teapot_150k(): Promise<Vec3[]> {
     const vectors = await load3dObject("/models/teapot_bezier2.tris", 0.4);
     return transform(vectors, translate(0,-0.5,0));
 }
@@ -39,45 +39,47 @@ async function load3dObject(url : string, scale : number) {
     return res;
 }
 
-export function Cube(): Vec3[] {
-    return quadsToTriangles([
-        // front
-        [-0.5, -0.5, -0.5],
-        [-0.5, 0.5, -0.5],
-        [0.5, 0.5, -0.5],
-        [0.5, -0.5, -0.5],
+export function Cube(): Promise<Vec3[]> {
+    return new Promise<Vec3[]>(x => x(
+        quadsToTriangles([
+            // front
+            [-0.5, -0.5, -0.5],
+            [-0.5, 0.5, -0.5],
+            [0.5, 0.5, -0.5],
+            [0.5, -0.5, -0.5],
 
-        // back
-        [0.5, -0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [-0.5, 0.5, 0.5],
-        [-0.5, -0.5, 0.5],
+            // back
+            [0.5, -0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [-0.5, 0.5, 0.5],
+            [-0.5, -0.5, 0.5],
 
-        // top
-        [-0.5, 0.5, -0.5],
-        [-0.5, 0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [0.5, 0.5, -0.5],
+            // top
+            [-0.5, 0.5, -0.5],
+            [-0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, -0.5],
 
-        // bottom
-        [0.5, -0.5, -0.5],
-        [0.5, -0.5, 0.5],
-        [-0.5, -0.5, 0.5],
-        [-0.5, -0.5, -0.5],
+            // bottom
+            [0.5, -0.5, -0.5],
+            [0.5, -0.5, 0.5],
+            [-0.5, -0.5, 0.5],
+            [-0.5, -0.5, -0.5],
 
 
-        // left
-        [-0.5, 0.5, -0.5],
-        [-0.5, -0.5, -0.5],
-        [-0.5, -0.5, 0.5],
-        [-0.5, 0.5, 0.5],
+            // left
+            [-0.5, 0.5, -0.5],
+            [-0.5, -0.5, -0.5],
+            [-0.5, -0.5, 0.5],
+            [-0.5, 0.5, 0.5],
 
-        // right
-        [0.5, 0.5, 0.5],
-        [0.5, -0.5, 0.5],
-        [0.5, -0.5, -0.5],
-        [0.5, 0.5, -0.5],
-    ])
+            // right
+            [0.5, 0.5, 0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, -0.5, -0.5],
+            [0.5, 0.5, -0.5],
+        ])
+    ));
 };
 
 export function quadsToTriangles(vectors: Vec3[]) {

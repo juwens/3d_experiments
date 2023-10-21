@@ -72,3 +72,13 @@ export class Vector3 {
         )
     }
 }
+
+export function mean(list : number[]){
+    const sum = list.reduce((a, b) => a + b, 0);
+    return sum / list.length;
+}
+
+export function median(list : number[]) {
+    const sorted = list.sort();
+    return sorted[Math.floor(sorted.length / 2)];
+}
