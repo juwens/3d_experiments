@@ -1,47 +1,47 @@
-type Vec3 = [number, number, number];
-type Vec4 = [number, number, number, number];
-type Mat4 = [Vec4, Vec4, Vec4, Vec4];
+import { Mat4, Vec3 } from "./math";
 
-export const Cube: Vec3[] = [
-    // front
-    [-0.5, -0.5, -0.5],
-    [-0.5, 0.5, -0.5],
-    [0.5, 0.5, -0.5],
-    [0.5, -0.5, -0.5],
+export function Cube(): Vec3[] {
+    return quadsToTriangles([
+        // front
+        [-0.5, -0.5, -0.5],
+        [-0.5, 0.5, -0.5],
+        [0.5, 0.5, -0.5],
+        [0.5, -0.5, -0.5],
 
-    // back
-    [0.5, -0.5, 0.5],
-    [0.5, 0.5, 0.5],
-    [-0.5, 0.5, 0.5],
-    [-0.5, -0.5, 0.5],
+        // back
+        [0.5, -0.5, 0.5],
+        [0.5, 0.5, 0.5],
+        [-0.5, 0.5, 0.5],
+        [-0.5, -0.5, 0.5],
 
-    // top
-    [-0.5, 0.5, -0.5],
-    [-0.5, 0.5, 0.5],
-    [0.5, 0.5, 0.5],
-    [0.5, 0.5, -0.5],
+        // top
+        [-0.5, 0.5, -0.5],
+        [-0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
+        [0.5, 0.5, -0.5],
 
-    // bottom
-    [0.5, -0.5, -0.5],
-    [0.5, -0.5, 0.5],
-    [-0.5, -0.5, 0.5],
-    [-0.5, -0.5, -0.5],
+        // bottom
+        [0.5, -0.5, -0.5],
+        [0.5, -0.5, 0.5],
+        [-0.5, -0.5, 0.5],
+        [-0.5, -0.5, -0.5],
 
 
-    // left
-    [-0.5, 0.5, -0.5],
-    [-0.5, -0.5, -0.5],
-    [-0.5, -0.5, 0.5],
-    [-0.5, 0.5, 0.5],
+        // left
+        [-0.5, 0.5, -0.5],
+        [-0.5, -0.5, -0.5],
+        [-0.5, -0.5, 0.5],
+        [-0.5, 0.5, 0.5],
 
-    // right
-    [0.5, 0.5, 0.5],
-    [0.5, -0.5, 0.5],
-    [0.5, -0.5, -0.5],
-    [0.5, 0.5, -0.5],
-]
+        // right
+        [0.5, 0.5, 0.5],
+        [0.5, -0.5, 0.5],
+        [0.5, -0.5, -0.5],
+        [0.5, 0.5, -0.5],
+    ])
+};
 
-export function load(vectors: Vec3[]) {
+export function quadsToTriangles(vectors: Vec3[]) {
     if (vectors.length % 4 !== 0) {
         throw "length must be a multiple of 4 to transform it to triangles";
     }
@@ -63,7 +63,7 @@ export function load(vectors: Vec3[]) {
     return triangles;
 }
 
-export function transformSingle(vec : Vec3, mat4: Mat4): Vec3 {
+export function transformSingle(vec: Vec3, mat4: Mat4): Vec3 {
     const x = vec[0];
     const y = vec[1];
     const z = vec[2];
@@ -76,8 +76,8 @@ export function transformSingle(vec : Vec3, mat4: Mat4): Vec3 {
     ]
 }
 
-export function transform(vecs : Vec3[], translation: Mat4): Vec3[] {
-    const res : Vec3[] = [];
+export function transform(vecs: Vec3[], translation: Mat4): Vec3[] {
+    const res: Vec3[] = [];
     for (let i = 0; i < vecs.length; i++) {
         res[i] = transformSingle(vecs[i], translation);
     }

@@ -3,14 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "serve": "npx serve bin",
-    "watch": "npx esbuild src/main.ts --bundle --watch --outfile=bin/main.js"
+    "dev": "npx esbuild src/main.ts --bundle --watch --outfile=bin/main.js --servedir=bin"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "esbuild": "^0.19.5",
-    "serve": "^14.2.1",
     "typescript": "^5.2.2"
   }
 }

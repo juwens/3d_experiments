@@ -1,4 +1,65 @@
 (() => {
+  // src/math.ts
+  var Triangle = class _Triangle {
+    constructor(v1, v2, v3) {
+      this.v1 = v1;
+      this.v2 = v2;
+      this.v3 = v3;
+    }
+    static create(a, b, c) {
+      return new _Triangle(
+        Vector3.create(a),
+        Vector3.create(b),
+        Vector3.create(c)
+      );
+    }
+    sufaceNormal() {
+      const u = this.v2.sub(this.v1);
+      const v = this.v3.sub(this.v1);
+      return u.crossProd(v);
+    }
+    angleToSurfaceNormal(other) {
+      const norm = this.sufaceNormal();
+      return Math.acos(
+        norm.dotProd(other) / (norm.length() + other.length())
+      );
+    }
+  };
+  var Vector3 = class _Vector3 {
+    constructor(x, y, z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+    static create(v) {
+      return new _Vector3(v[0], v[1], v[2]);
+    }
+    sub(other) {
+      return new _Vector3(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+    length() {
+      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
+    }
+    crossProd(v) {
+      const u = this;
+      return new _Vector3(
+        u.y * v.z - (u.z - v.y),
+        u.z * v.x - (u.x - v.z),
+        u.x * v.y - (u.y - v.x)
+      );
+    }
+    dotProd(b) {
+      const a = this;
+      return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+    toVec3() {
+      return [this.x, this.y, this.z];
+    }
+    toString(precision) {
+      return `[${this.x.toFixed(precision)}, ${this.y.toFixed(precision)}, ${this.z.toFixed(precision)}]`;
+    }
+  };
+
   // src/models.ts
   var Cube = [
     // front
@@ -97,6 +158,8 @@
   }
 
   // src/main.ts
+  new EventSource("/esbuild").addEventListener("change", () => location.reload());
+  console.log(new Vector3(0, 0, 1).crossProd(new Vector3(0, 0, 1)));
   document.addEventListener("DOMContentLoaded", (event) => {
     const appElm = document.getElementById("app");
     const canvas = document.getElementById("canvas");
@@ -115,6 +178,9 @@
     renderLoop(canvas, context);
   });
   function renderLoop(canvas, context) {
+    const wireframe = false;
+    const lightDirection = Vector3.create([-1, -1, 1]);
+    const viewingDirection = Vector3.create([0, 0, 1]);
     const timestamp = Date.now();
     let vectors = load(Cube);
     const phiDeg = timestamp / 100 % 360;
@@ -124,17 +190,29 @@
     vectors = transform(vectors, rotZ(phiRad * 0.1));
     context.clearRect(-2, -2, 4, 4);
     for (let i = 0; i < vectors.length; i += 3) {
-      context.strokeStyle = "black";
       context.lineWidth = 0.01;
+      const v1 = vectors[i];
+      const v2 = vectors[i + 1];
+      const v3 = vectors[i + 2];
+      const tr = Triangle.create(v1, v2, v3);
+      const angleToView = tr.angleToSurfaceNormal(viewingDirection);
+      console.log(`triangle ${i / 3}: ${tr.sufaceNormal().toString(1)} ${angleToView}`);
+      const brightness = tr.angleToSurfaceNormal(lightDirection) / Math.PI / 2;
+      const colorNr = brightness * 255;
+      context.fillStyle = context.strokeStyle = `rgb(255, ${colorNr}, ${colorNr})`;
       context.beginPath();
       context.moveTo(vectors[i][0], vectors[i][1]);
       context.lineTo(vectors[i + 1][0], vectors[i + 1][1]);
       context.lineTo(vectors[i + 2][0], vectors[i + 2][1]);
       context.closePath();
-      context.stroke();
+      if (wireframe) {
+        context.stroke();
+      } else {
+        context.fill();
+      }
     }
     drawCrossbarWindow(context);
-    window.setTimeout(() => renderLoop(canvas, context), 100);
+    console.log(" ");
   }
   function rad(deg) {
     return deg / 360 * Math.PI * 2;
