@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/uuid": "^9.0.6",
     "esbuild": "^0.19.5",
     "typescript": "^5.2.2"
   },

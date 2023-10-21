@@ -1,4 +1,4 @@
-import { Mat4, Vec3 } from "./math";
+import { Mat4, Vec3, Vec4 } from "./math";
 
 export async function Teapot_3k(): Promise<Vec3[]> {
     const vectors = await load3dObject("/models/teapot_bezier0.tris", 0.4);
@@ -15,7 +15,7 @@ export async function Teapot_150k(): Promise<Vec3[]> {
     return transform(vectors, translate(0,-0.5,0));
 }
 
-async function load3dObject(url : string, scale : number) {
+async function load3dObject(url : string, scale : number) : Promise<Vec3[]> {
     const response = await fetch(url);
     const lines = (await response.text()).split('\n');
     
@@ -32,7 +32,7 @@ async function load3dObject(url : string, scale : number) {
         res.push([
             parseFloat(elements[0]) * scale,
             parseFloat(elements[1]) * scale,
-            parseFloat(elements[2]) * scale,
+            parseFloat(elements[2]) * scale
         ]);
     }
 
@@ -108,12 +108,12 @@ export function transformSingle(vec: Vec3, mat4: Mat4): Vec3 {
     const x = vec[0];
     const y = vec[1];
     const z = vec[2];
+    const w = 1;
 
     return [
-        x * mat4[0][0] + y * mat4[0][1] + z * mat4[0][2] + mat4[0][3],
-        x * mat4[1][0] + y * mat4[1][1] + z * mat4[1][2] + mat4[1][3],
-        x * mat4[2][0] + y * mat4[2][1] + z * mat4[2][2] + mat4[2][3],
-        //x * mat4[3][0] + y * mat4[3][1] + z * mat4[3][2] + mat4[3][3],
+        x * w * mat4[0][0] + y * w * mat4[0][1] + z * w * mat4[0][2] + mat4[0][3],
+        x * w * mat4[1][0] + y * w * mat4[1][1] + z * w * mat4[1][2] + mat4[1][3],
+        x * w * mat4[2][0] + y * w * mat4[2][1] + z * w * mat4[2][2] + mat4[2][3],
     ]
 }
 
@@ -153,7 +153,7 @@ export function rotateX(phi: number): Mat4 {
         [1, 0, 0, 0],
         [0, cos(phi), -sin(phi), 0],
         [0, sin(phi), cos(phi), 0],
-        [0, 0, 0, 0],
+        [0, 0, 0, 1],
     ];
 }
 
@@ -162,15 +162,15 @@ export function rotateY(phi: number): Mat4 {
         [cos(phi), 0, sin(phi), 0],
         [0, 1, 0, 0],
         [-sin(phi), 0, cos(phi), 0],
-        [0, 0, 0, 0],
+        [0, 0, 0, 1],
     ];
 }
 
-export function rotZ(phi: number): Mat4 {
+export function rotateZ(phi: number): Mat4 {
     return [
         [cos(phi), -sin(phi), 0, 0],
         [sin(phi), cos(phi), 0, 0],
         [0, 0, 1, 0],
-        [0, 0, 0, 0],
+        [0, 0, 0, 1],
     ];
 }

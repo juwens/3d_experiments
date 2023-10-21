@@ -1,6 +1,6 @@
 import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
-import { Triangle, Vec3, Vector3, mean, median, rad } from "./math";
-import { Cube, Teapot_150k, Teapot_19k, Teapot_3k, rotateX, rotateY, rotZ as rotateZ, scale, transform, translate } from "./models";
+import { Triangle, Vec3, Vec4, Vector, Vector3, mean, median, rad } from "./math";
+import { Cube, Teapot_150k, Teapot_19k, Teapot_3k, rotateX, rotateY, rotateZ as rotateZ, scale, transform, translate } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -25,8 +25,8 @@ class RenderOptions {
             .then((x: Vec3[]) => this.loadedVectors = x);
     }
     wireframe: boolean = false;
-    lightDirection = Vector3.create([-1, -1, 1]);
-    viewingDirection = Vector3.create([0, 0, 1]);
+    lightDirection = Vector.create4([-1, -1, 1, 1]);
+    viewingDirection = Vector.create4([0, 0, 1, 1]);
     loadedVectors: Vec3[] = [];
 }
 
@@ -161,12 +161,10 @@ function render(context: CanvasRenderingContext2D, options: RenderOptions) {
     context.clearRect(-2, -2, 4, 4);
 
     for (let i = 0; i < vectors.length; i += 3) {
-
-        const v1 = vectors[i];
-        const v2 = vectors[i + 1];
-        const v3 = vectors[i + 2];
-
-        const tr = Triangle.create(v1, v2, v3);
+        const tr = Triangle.create(
+            vectors[i], 
+            vectors[i + 1], 
+            vectors[i + 2]);
         const angleToView = tr.normal().angle(options.viewingDirection);
 
         // culling
@@ -179,9 +177,9 @@ function render(context: CanvasRenderingContext2D, options: RenderOptions) {
         context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`;
 
         context.beginPath();
-        context.moveTo(vectors[i][0], vectors[i][1]);
-        context.lineTo(vectors[i + 1][0], vectors[i + 1][1]);
-        context.lineTo(vectors[i + 2][0], vectors[i + 2][1]);
+        context.moveTo(tr.v1.x, tr.v1.y);
+        context.lineTo(tr.v2.x, tr.v2.y);
+        context.lineTo(tr.v3.x, tr.v3.y);
         context.closePath();
         if (!!options.wireframe) {
             context.lineWidth = 0.01;
