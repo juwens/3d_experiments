@@ -1,6 +1,6 @@
 import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
-import { Triangle, Vec3, Vec4, Vector, Vector3, mean, median, rad } from "./math";
-import { Cube, Teapot_150k, Teapot_19k, Teapot_3k, rotateX, rotateY, rotateZ as rotateZ, scale, transform, translate } from "./models";
+import { Triangle, Vec3, Vec4, Vector, cameraProjection, mean, median, rad, rotateX, rotateY, rotateZ, scale, transform, translate } from "./math";
+import { Cube, Teapot_150k, Teapot_19k, Teapot_3k } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -151,12 +151,14 @@ function render(context: CanvasRenderingContext2D, options: RenderOptions) {
     let vectors = options.loadedVectors;
     const phiDeg = Date.now() / 100 % 360;
     const phiRad = rad(phiDeg);
-    vectors = transform(vectors, scale(1, -1, 1));
-    vectors = transform(vectors, rotateY(phiRad));
+    vectors = transform(vectors, scale(1, 1, 1));
+    vectors = transform(vectors, rotateY(phiRad*3));
     //vectors = transform(vectors, rotateX(phiRad + 0.5));
     //vectors = transform(vectors, rotateZ(phiRad + 0.1));
     vectors = transform(vectors, rotateX(-0.3));
     vectors = transform(vectors, rotateZ(0));
+    vectors = transform(vectors, translate(0, 0, 2))
+    vectors = transform(vectors, cameraProjection());
 
     context.clearRect(-2, -2, 4, 4);
 
@@ -177,9 +179,9 @@ function render(context: CanvasRenderingContext2D, options: RenderOptions) {
         context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`;
 
         context.beginPath();
-        context.moveTo(tr.v1.x, tr.v1.y);
-        context.lineTo(tr.v2.x, tr.v2.y);
-        context.lineTo(tr.v3.x, tr.v3.y);
+        context.moveTo(tr.v1.x, -tr.v1.y);
+        context.lineTo(tr.v2.x, -tr.v2.y);
+        context.lineTo(tr.v3.x, -tr.v3.y);
         context.closePath();
         if (!!options.wireframe) {
             context.lineWidth = 0.01;
