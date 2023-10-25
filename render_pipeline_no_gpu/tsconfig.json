@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "noImplicitReturns": true,
+        "strict": true,
+        "strictFunctionTypes": false,
+        "noImplicitUseStrict": false,
+        "noImplicitAny": false,
+        "allowSyntheticDefaultImports": true,
+        "lib": ["ES2015", "DOM"],
+        "jsx": "react",
+        "target": "ES2015"
+    }
+}
