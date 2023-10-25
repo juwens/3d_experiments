@@ -118,12 +118,8 @@ export class Vector3 {
     }
 
     public crossProd(v: Vector3): Vector3 {
-        const u = this;
-        return new Vector3(
-            (u.y * v.z) - (u.z * v.y),
-            (u.z * v.x) - (u.x * v.z),
-            (u.x * v.y) - (u.y * v.x)
-        );
+        const r = crossProd(this.toVertex(), v.toVertex());
+        return new Vector3(r.x, r.y, r.z);
     }
 
     public dotProd(b: Vector3): number {
@@ -131,7 +127,7 @@ export class Vector3 {
         return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
     }
 
-    public toVec3(): Vertex {
+    public toVertex(): Vertex {
         return {x: this.x, y: this.y, z: this.z};
     }
 
@@ -396,4 +392,12 @@ export function sq(value: number) : number {
 
 export function sub(a: Vertex, b: Vertex): Vector3 {
     return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+export function crossProd(a: Vertex, b: Vertex): Vertex {
+    return {
+        x: (a.y * b.z) - (a.z * b.y),
+        y: (a.z * b.x) - (a.x * b.z),
+        z: (a.x * b.y) - (a.y * b.x)
+    };
 }

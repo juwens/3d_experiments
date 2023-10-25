@@ -1,4 +1,7 @@
 {
+    "include": [
+        "./**/*.ts"
+    ],
     "compilerOptions": {
         "noImplicitReturns": true,
         "strict": true,
@@ -8,6 +11,9 @@
         "allowSyntheticDefaultImports": true,
         "lib": ["ES2015", "DOM"],
         "jsx": "react",
-        "target": "ES2015"
+        "target": "ES2015",
+        "module": "NodeNext",
+        "esModuleInterop": true,
+        "moduleResolution": "NodeNext"
     }
 }
