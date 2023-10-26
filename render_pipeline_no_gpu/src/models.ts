@@ -82,7 +82,7 @@ async function load3dObject(url: string, scale: number): Promise<VertexEx[]> {
 
     const vertices: Vertex[] = [];
 
-    for (let i = 1; i < lines.length; i += 3) {
+    for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         const elements = line.split(' ');
 
