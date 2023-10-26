@@ -1,5 +1,5 @@
 import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
-import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, cameraProjection, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, rotateZ, scale, transform, translate, angle, RGBA } from "./math";
+import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, cameraProjection, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, rotateZ, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
 import { Cube_old, Plane, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
 import { delay } from "./util";
@@ -52,7 +52,7 @@ class RenderOptions {
     rotationVertical = 0;
 }
 
-const renderOpts = new RenderOptions(Models.Triangle);
+const renderOpts = new RenderOptions(Models.Cube);
 
 function renderFrame() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -243,25 +243,34 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     ctx.clearRect(-2, -2, 4, 4);
 
-    const camProjection = cameraProjection();
+    const camProjection = noopProjection();
     const modelViewProj = noopProjection();
 
     let vectors = options.loadedVectors;
     const phiDeg = Date.now() / 100 % 360;
     const phiRad = rad(phiDeg);
-    // vectors = transform(vectors, scale(1, 1, 1));
-    //vectors = transform(vectors, rotateY(phiRad*3));
-    vectors = transform(vectors, rotateY(renderOpts.rotationHorizontal));
-    vectors = transform(vectors, rotateX(renderOpts.rotationVertical));
-    //vectors = transform(vectors, rotateX(phiRad + 0.5));
-    //vectors = transform(vectors, rotateZ(phiRad + 0.1));
-    // vectors = transform(vectors, rotateX(-0.3));
-    // vectors = transform(vectors, rotateZ(0));
-    //vectors = transform(vectors, translate(0, 0, 3))
-    vectors = transform(vectors, translate(renderOpts.x, 0, renderOpts.z))
-    vectors = transform(vectors, camProjection);
+    // // vectors = transformEx(vectors, scale(2, 2, 2));
+    // //vectors = transform(vectors, rotateY(phiRad*3));
+    // vectors = transformEx(vectors, rotateY(renderOpts.rotationHorizontal));
+    // vectors = transformEx(vectors, rotateX(renderOpts.rotationVertical));
+    // //vectors = transform(vectors, rotateX(phiRad + 0.5));
+    // //vectors = transform(vectors, rotateZ(phiRad + 0.1));
+    // // vectors = transform(vectors, rotateX(-0.3));
+    // // vectors = transform(vectors, rotateZ(0));
+    // // vectors = transformEx(vectors, translate(0, 0, -3))
+    // vectors = transformEx(vectors, translate(renderOpts.x, 0, renderOpts.z));
 
-    const light: VertexEx = transform(options.light, camProjection);
+    vectors = vectors.map(x => {
+        return multiMul([
+            scale(0.5, 0.5, 0.5),
+            rotateY(renderOpts.rotationHorizontal),
+            rotateX(renderOpts.rotationVertical),
+            translate(renderOpts.x, 0, renderOpts.z),
+            //cameraProjection()
+        ], x);
+    });
+    
+    const light: VertexEx = transformEx([options.light], camProjection)[0];
 
     const transformations = [
         scale(0.2, 0.2, 0.2),
@@ -272,7 +281,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     const vertexShaderOut: VertexEx[] = [];
 
-    for (const v_in of vectors.reverse()) {
+    for (const v_in of vectors) {
         const v_out = vertexShader(v_in, camProjection, modelViewProj);
         vertexShaderOut.push(v_out);
     }
@@ -282,7 +291,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const angleToView = angle(v1.normal, options.view.normal);
 
-        console.log(`${angleToView.toFixed(6)}`, v1.normal, options.view.normal);
+        console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
 
         // culling
         if (!options.wireframe && angleToView < halfPi) {

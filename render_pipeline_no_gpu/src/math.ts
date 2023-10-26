@@ -2,7 +2,6 @@
 
 export type Vertex = {x:number, y:number, z:number};
 export type VertexEx = { position: Vertex, normal: Vertex, color?: RGBA };
-export type Vec3Tuple = [x:number, y:number, z:number];
 export type Vec4 = [number, number, number, number];
 export type Mat4 = [Vec4, Vec4, Vec4, Vec4];
 export type float4 = [Vec4, Vec4, Vec4, Vec4];
@@ -29,58 +28,10 @@ function mulMat4(a: Mat4, b: Mat4): Mat4 {
     ];
 }
 
-export class Triangle {
-    constructor(
-        public readonly v1: Vector3,
-        public readonly v2: Vector3,
-        public readonly v3: Vector3
-    ) {
-    }
-
-    static create(a: Vertex, b: Vertex, c: Vertex):Triangle;
-    static create(a: VertexEx, b: VertexEx, c: VertexEx):Triangle;
-    static create<T extends Vertex | VertexEx>(a: T, b: T, c: T):Triangle {
-        if (a.hasOwnProperty("x")) {
-            return new Triangle(
-                Vector.create3(a as Vertex),
-                Vector.create3(b as Vertex),
-                Vector.create3(c as Vertex)
-            );
-        }
-
-        if (a.hasOwnProperty("position")) {
-            return new Triangle(
-                Vector.create3((a as VertexEx).position),
-                Vector.create3((b as VertexEx).position),
-                Vector.create3((c as VertexEx).position)
-            );
-
-        }
-
-        throw "not implemented";
-    }
-
-    normal(): Vector3 {
-        const u = this.v2.sub(this.v1);
-        const v = this.v3.sub(this.v1);
-        // console.log({
-        //     v1: this.v1,
-        //     v2: this.v2,
-        //     v3: this.v3,
-        //     u, 
-        //     v,
-        //     cross: u.crossProd(v)
-        // });
-
-        return u.crossProd(v);
-    }
-}
-
 export class Vector {
     public static create3(v: Vertex);
     public static create3(v: VertexEx);
-    public static create3(v: Vec3Tuple);
-    public static create3(v: Vertex | Vec3Tuple | VertexEx) {
+    public static create3(v: Vertex | VertexEx) {
         if (v === undefined){
             throw "undefined";
         }
@@ -240,28 +191,16 @@ export function deg(rad: number): number {
     return rad / Math.PI / 2 * 360;
 }
 
-export function transform(vec: VertexEx, translation: Mat4): VertexEx;
-export function transform(vecs: VertexEx[], translation: Mat4): VertexEx[];
-export function transform(data: VertexEx | VertexEx[], translation: Mat4): VertexEx[] | VertexEx {
-    if (!Array.isArray(data)) {
-        return transformSingle(data as VertexEx, translation);
-    }
-    
-    const vecs = data as VertexEx[];
+export function transformEx1(vec: VertexEx, translation: Mat4): VertexEx{
+    return transformEx([vec], translation)[0];
+}
 
-    const res: VertexEx[] = [];
-    for (let i = 0; i < vecs.length; i++) {
-        res[i] = transformSingle(vecs[i], translation);
-    }
 
+export function transformEx(vecs: VertexEx[], translation: Mat4): VertexEx[] {
+    const res: VertexEx[] = vecs.map(x => transformSingle(x, translation));
     return res;
 
     function transformSingle(vec: VertexEx, mat: Mat4): VertexEx {
-        const x = vec.position.x;
-        const y = vec.position.y;
-        const z = vec.position.z;
-        const w = x * mat[3][0] + y * mat[3][1] + z * mat[3][2] + mat[3][3];
-
         return (
             {
                 position: transformSingleVertex(vec.position, mat),
@@ -275,10 +214,12 @@ function transformSingleVertex(vec: Vertex, mat : Mat4) : Vertex {
     const x = vec.x;
     const y = vec.y;
     const z = vec.z;
+    const w = x * mat[3][0] + y * mat[3][1] + z * mat[3][2] + mat[3][3];
+
     return {
-        x: (x * mat[0][0] + y * mat[0][1] + z * mat[0][2] + mat[0][3]),
-        y: (x * mat[1][0] + y * mat[1][1] + z * mat[1][2] + mat[1][3]),
-        z: (x * mat[2][0] + y * mat[2][1] + z * mat[2][2] + mat[2][3])
+        x: (x * mat[0][0] + y * mat[0][1] + z * mat[0][2] + mat[0][3])/w,
+        y: (x * mat[1][0] + y * mat[1][1] + z * mat[1][2] + mat[1][3])/w,
+        z: (x * mat[2][0] + y * mat[2][1] + z * mat[2][2] + mat[2][3])/w,
     };
 }
 
@@ -351,9 +292,9 @@ export function noopProjection(): Mat4 {
 type Length<Type extends readonly unknown[]> = Type['length']
 
 export function mul(matricies: Mat4[], vec: VertexEx) {
-    let m = matricies[0];
+    let m = noopProjection();
 
-    for (let i = 1; i < matricies.length; i++) {
+    for (let i = 0; i < matricies.length; i++) {
         const currMat = matricies[i];
         for (let row = 0; row < currMat.length; row++) {
             const currRow = currMat[row];
@@ -367,7 +308,7 @@ export function mul(matricies: Mat4[], vec: VertexEx) {
         }
     }
 
-    return transform(vec, m);
+    return transformEx([vec], m)[0];
 }
 
 export function angle(a: Vertex, b: Vertex) {
@@ -390,8 +331,12 @@ export function sq(value: number) : number {
     return value * value;
 }
 
-export function sub(a: Vertex, b: Vertex): Vector3 {
-    return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+export function sub(a: Vertex, b: Vertex): Vertex {
+    return {
+        x:a.x - b.x,
+        y: a.y - b.y,
+        z: a.z - b.z
+    };
 }
 
 export function crossProd(a: Vertex, b: Vertex): Vertex {
@@ -407,4 +352,10 @@ export function unit(a: Vertex): Vertex {
     const res = {x:a.x/len, y:a.y/len, z:a.z/len};
     console.log(a, len, res, length(res));
     return res;
+}
+
+export function normal(a: Vertex, b:Vertex, c:Vertex): Vertex {
+    const u = sub(b, a);
+    const v = sub(c, a);
+    return crossProd(u, v);
 }

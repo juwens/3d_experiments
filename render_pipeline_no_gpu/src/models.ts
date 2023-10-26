@@ -1,4 +1,4 @@
-import { Mat4, Triangle as TriangleClass, Vertex, VertexEx, Vec4, Vector, Vector3, transform, translate, Vec3Tuple, RGBA, unit } from "./math";
+import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, transformEx, translate, RGBA, unit, normal } from "./math";
 
 const cos = Math.cos;
 const sin = Math.sin;
@@ -30,17 +30,17 @@ export async function Triangle(): Promise<VertexEx[]> {
 
 export async function Teapot_3k(): Promise<VertexEx[]> {
     const vectors = await load3dObject("/models/teapot_bezier0.tris", 0.4);
-    return transform(vectors, translate(0, -0.5, 0));
+    return transformEx(vectors, translate(0, -0.5, 0));
 }
 
 export async function Teapot_19k(): Promise<VertexEx[]> {
     const vectors = await load3dObject("/models/teapot_bezier1.tris", 0.4);
-    return transform(vectors, translate(0, -0.5, 0));
+    return transformEx(vectors, translate(0, -0.5, 0));
 }
 
 export async function Teapot_150k(): Promise<VertexEx[]> {
     const vectors = await load3dObject("/models/teapot_bezier2.tris", 0.4);
-    return transform(vectors, translate(0, -0.5, 0));
+    return transformEx(vectors, translate(0, -0.5, 0));
 }
 
 export async function Sphere(): Promise<VertexEx[]> {
@@ -100,15 +100,14 @@ async function load3dObject(url: string, scale: number): Promise<VertexEx[]> {
     const res: VertexEx[] = [];
 
     for (let i = 0; i < vertices.length; i += 3) {
-        const tr = TriangleClass.create(
-            vertices[i],
-            vertices[i + 1],
-            vertices[i + 2] ?? [0,0,0]);
+        const v1 = vertices[i];
+        const v2 = vertices[i + 1];
+        const v3 = vertices[i + 2];
 
-        const n = unit(tr.normal());
-        res.push({ position: tr.v1.toVertex(), normal: n });
-        res.push({ position: tr.v2.toVertex(), normal: n });
-        res.push({ position: tr.v3.toVertex(), normal: n });
+        const n = unit(normal(v1, v2, v3));
+        res.push({ position: v1, normal: n });
+        res.push({ position: v2, normal: n });
+        res.push({ position: v3, normal: n });
     }
 
     return res;
@@ -142,53 +141,55 @@ export function Cube_old(): Promise<VertexEx[]> {
     return new Promise<VertexEx[]>(x => {
         const vectors : VertexEx[] = [];
         
+        const d = 0.3333;
+
         // front
         vectors.push(...quadsToTriangles([
-            vec(-0.5, -0.5, -0.5),
-            vec(-0.5, 0.5, -0.5),
-            vec(0.5, 0.5, -0.5),
-            vec(0.5, -0.5, -0.5),
+            vec(-d, -d, -d),
+            vec(-d, d, -d),
+            vec(d, d, -d),
+            vec(d, -d, -d),
         ], [255,0,0]));
 
 
         // back
         vectors.push(...quadsToTriangles([
-            vec(0.5, -0.5, 0.5),
-            vec(0.5, 0.5, 0.5),
-            vec(-0.5, 0.5, 0.5),
-            vec(-0.5, -0.5, 0.5),
+            vec(d, -d, d),
+            vec(d, d, d),
+            vec(-d, d, d),
+            vec(-d, -d, d),
         ], [0,255,0]));
 
         // top
         vectors.push(...quadsToTriangles([
-            vec(-0.5, 0.5, -0.5),
-            vec(-0.5, 0.5, 0.5),
-            vec(0.5, 0.5, 0.5),
-            vec(0.5, 0.5, -0.5),
+            vec(-d, d, -d),
+            vec(-d, d, d),
+            vec(d, d, d),
+            vec(d, d, -d),
         ], [0,0,255]));
 
         // bottom
         vectors.push(...quadsToTriangles([
-            vec(0.5, -0.5, -0.5),
-            vec(0.5, -0.5, 0.5),
-            vec(-0.5, -0.5, 0.5),
-            vec(-0.5, -0.5, -0.5),
+            vec(d, -d, -d),
+            vec(d, -d, d),
+            vec(-d, -d, d),
+            vec(-d, -d, -d),
         ], [255,255,0]));
 
         // right
         vectors.push(...quadsToTriangles([
-            vec(0.5, 0.5, 0.5),
-            vec(0.5, -0.5, 0.5),
-            vec(0.5, -0.5, -0.5),
-            vec(0.5, 0.5, -0.5),
+            vec(d, d, d),
+            vec(d, -d, d),
+            vec(d, -d, -d),
+            vec(d, d, -d),
         ], [0,255, 255]));
 
         // left
         vectors.push(...quadsToTriangles([
-            vec(-0.5, 0.5, -0.5),
-            vec(-0.5, -0.5, -0.5),
-            vec(-0.5, -0.5, 0.5),
-            vec(-0.5, 0.5, 0.5),
+            vec(-d, d, -d),
+            vec(-d, -d, -d),
+            vec(-d, -d, d),
+            vec(-d, d, d),
         ],  [255, 0, 255]));
 
         x(vectors);
@@ -207,8 +208,8 @@ export function quadsToTriangles(vectors: Vertex[], color: RGBA): VertexEx[] {
         const v3 = vectors[i + 2];
         const v4 = vectors[i + 3];
 
-        const n1 = unit(TriangleClass.create(v1, v2, v3).normal().toVertex());
-        const n2 = unit(TriangleClass.create(v3, v4, v1).normal().toVertex());
+        const n1 = unit(normal(v1, v2, v3));
+        const n2 = unit(normal(v3, v4, v1));
 
         vertices.push({ position: v1, normal: n1, color: color });
         vertices.push({ position: v2, normal: n1, color: color });
