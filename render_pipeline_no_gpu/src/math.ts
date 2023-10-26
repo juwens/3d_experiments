@@ -37,9 +37,9 @@ export class Triangle {
     ) {
     }
 
-    static create(a: Vertex, b: Vertex, c: Vertex);
-    static create(a: VertexEx, b: VertexEx, c: VertexEx);
-    static create<T extends Vertex | VertexEx>(a: T, b: T, c: T) {
+    static create(a: Vertex, b: Vertex, c: Vertex):Triangle;
+    static create(a: VertexEx, b: VertexEx, c: VertexEx):Triangle;
+    static create<T extends Vertex | VertexEx>(a: T, b: T, c: T):Triangle {
         if (a.hasOwnProperty("x")) {
             return new Triangle(
                 Vector.create3(a as Vertex),
@@ -265,7 +265,7 @@ export function transform(data: VertexEx | VertexEx[], translation: Mat4): Verte
         return (
             {
                 position: transformSingleVertex(vec.position, mat),
-                normal: transformSingleVertex(vec.normal, mat),
+                normal: unit(transformSingleVertex(vec.normal, mat)),
                 color: vec.color
             });
     }
@@ -400,4 +400,11 @@ export function crossProd(a: Vertex, b: Vertex): Vertex {
         y: (a.z * b.x) - (a.x * b.z),
         z: (a.x * b.y) - (a.y * b.x)
     };
+}
+
+export function unit(a: Vertex): Vertex {
+    const len = length(a);
+    const res = {x:a.x/len, y:a.y/len, z:a.z/len};
+    console.log(a, len, res, length(res));
+    return res;
 }

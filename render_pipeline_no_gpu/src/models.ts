@@ -1,4 +1,4 @@
-import { Mat4, Triangle as TriangleClass, Vertex, VertexEx, Vec4, Vector, Vector3, transform, translate, Vec3Tuple, RGBA } from "./math";
+import { Mat4, Triangle as TriangleClass, Vertex, VertexEx, Vec4, Vector, Vector3, transform, translate, Vec3Tuple, RGBA, unit } from "./math";
 
 const cos = Math.cos;
 const sin = Math.sin;
@@ -11,17 +11,17 @@ export async function Triangle(): Promise<VertexEx[]> {
         x([
             {
                 position: vec(-halfWidth, 0, 0),
-                normal: vec(0, 0, -1),
+                normal: unit(vec(0, 0, -1)),
                 color: [255, 0, 0],
             },
             {
                 position: vec(halfWidth, 0, 0),
-                normal: vec(0, 0, -1),
+                normal: unit(vec(0, 0, -1)),
                 color: [0, 255, 0],
             },
             {
                 position: vec(0, height, 0),
-                normal: vec(0, 0, -1),
+                normal: unit(vec(0, 0, -1)),
                 color: [0, 0, 255],
             }
         ])
@@ -43,22 +43,22 @@ export async function Teapot_150k(): Promise<VertexEx[]> {
     return transform(vectors, translate(0, -0.5, 0));
 }
 
-export async function Sphere(): Promise<Vertex[]> {
-    return new Promise<Vertex[]>(x => {
-        const res: Vertex[] = [];
+export async function Sphere(): Promise<VertexEx[]> {
+    return new Promise<VertexEx[]>(x => {
+        const res: VertexEx[] = [];
         const step = (Math.PI / 6);
 
         for (let theta = 0; theta < Math.PI * 2; theta += step) {
             for (let phi = -Math.PI / 2; phi < (Math.PI / 2); phi += step) {
-                res.push(getPosition(1, theta, phi));
-                res.push(getPosition(1, theta, phi + step));
-                res.push(getPosition(1, theta + step, phi + step));
-                res.push(getPosition(1, theta + step, phi + step));
-                res.push(getPosition(1, theta + step, phi));
-                res.push(getPosition(1, theta, phi));
+                res.push(createVecEx(1, theta, phi));
+                res.push(createVecEx(1, theta, phi + step));
+                res.push(createVecEx(1, theta + step, phi + step));
+                res.push(createVecEx(1, theta + step, phi + step));
+                res.push(createVecEx(1, theta + step, phi));
+                res.push(createVecEx(1, theta, phi));
             }
         }
-        x(res.reverse());
+        x(res);
     });
 
     /**
@@ -67,8 +67,12 @@ export async function Sphere(): Promise<Vertex[]> {
      * @param theta x -> y
      * @param phi z -> crossProd(x, y)
      */
-    function getPosition(r, theta, phi): Vertex {
-        return vec(sin(theta) * cos(phi) * r, sin(phi) * r, cos(theta) * cos(phi) * r);
+    function createVecEx(r, theta, phi): VertexEx {
+        const v = vec(sin(theta) * cos(phi) * r, sin(phi) * r, cos(theta) * cos(phi) * r);
+        return {
+            position: v,
+            normal: unit(v)
+        }
     }
 }
 
@@ -101,10 +105,10 @@ async function load3dObject(url: string, scale: number): Promise<VertexEx[]> {
             vertices[i + 1],
             vertices[i + 2] ?? [0,0,0]);
 
-        const n = tr.normal();
-        res.push({ position: tr.v1.toVec3(), normal: n.toVec3() });
-        res.push({ position: tr.v2.toVec3(), normal: n.toVec3() });
-        res.push({ position: tr.v3.toVec3(), normal: n.toVec3() });
+        const n = unit(tr.normal());
+        res.push({ position: tr.v1.toVertex(), normal: n });
+        res.push({ position: tr.v2.toVertex(), normal: n });
+        res.push({ position: tr.v3.toVertex(), normal: n });
     }
 
     return res;
@@ -180,12 +184,12 @@ export function Cube_old(): Promise<VertexEx[]> {
         ], [0,255, 255]));
 
         // left
-        var a = [
+        vectors.push(...quadsToTriangles([
             vec(-0.5, 0.5, -0.5),
             vec(-0.5, -0.5, -0.5),
             vec(-0.5, -0.5, 0.5),
             vec(-0.5, 0.5, 0.5),
-        ]
+        ],  [255, 0, 255]));
 
         x(vectors);
     });
@@ -203,8 +207,8 @@ export function quadsToTriangles(vectors: Vertex[], color: RGBA): VertexEx[] {
         const v3 = vectors[i + 2];
         const v4 = vectors[i + 3];
 
-        const n1 = TriangleClass.create(v1, v2, v3).normal().toVec3();
-        const n2 = TriangleClass.create(v3, v4, v1).normal().toVec3();
+        const n1 = unit(TriangleClass.create(v1, v2, v3).normal().toVertex());
+        const n2 = unit(TriangleClass.create(v3, v4, v1).normal().toVertex());
 
         vertices.push({ position: v1, normal: n1, color: color });
         vertices.push({ position: v2, normal: n1, color: color });

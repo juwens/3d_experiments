@@ -2,6 +2,7 @@
 import { describe, expect, test } from 'vitest'
 import * as math from './math'
 import { vec } from './models';
+import { unit } from './math';
 
 test('length(vector)', () => {
   expect(math.length({x:0,y:0,z:0})).toBe(0);
@@ -90,4 +91,8 @@ describe("rotateX", () => {
       expect(v.normal.z).toBeCloseTo(0);
     })
   }
+})
+
+test("unit()", () => {
+  expect(unit({x:1, y:2, z:3})).toStrictEqual({x:1/Math.sqrt(14), y:2/Math.sqrt(14), z:3/Math.sqrt(14)});
 })
