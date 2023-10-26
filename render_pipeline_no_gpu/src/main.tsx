@@ -212,18 +212,20 @@ const minFrameDuration = 1000 / frameCap;
 function startRender(canvas: HTMLCanvasElement) {
     console.log("startRender()", canvas);
 
-    const context: CanvasRenderingContext2D = canvas.getContext("2d")!;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    context.strokeStyle = "black";
-    context.fillStyle = "hotpink";
-    context.lineWidth = 1;
+    const ctx: CanvasRenderingContext2D = canvas.getContext("2d")!;
+    console.log(ctx.globalCompositeOperation);
 
-    context.translate(canvas.width / 2, canvas.height / 2);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "hotpink";
+    ctx.lineWidth = 1;
+
+    ctx.translate(canvas.width / 2, canvas.height / 2);
     const scale = 0.45;
-    context.scale(canvas.width * scale, canvas.height * scale);
-    context.fillRect(-1, -1, 2, 2);
-    renderLoop(canvas, context);
+    ctx.scale(canvas.width * scale, canvas.height * scale);
+    ctx.fillRect(-1, -1, 2, 2);
+    renderLoop(canvas, ctx);
 }
 
 async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
@@ -257,7 +259,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
     // vectors = transform(vectors, rotateZ(0));
     //vectors = transform(vectors, translate(0, 0, 3))
     vectors = transform(vectors, translate(renderOpts.x, 0, renderOpts.z))
-    // vectors = transform(vectors, camProj);
+    vectors = transform(vectors, camProjection);
 
     const light: VertexEx = transform(options.light, camProjection);
 
@@ -290,19 +292,6 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
         //const brightness = angle(vec.normal, light.normal) / Math.PI / 2;
         // context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`;
 
-        const radius = myMath.length(myMath.sub(v1.position, v2.position));
-        const grd1 = ctx.createRadialGradient(v1.position.x, -v1.position.y, 0, v1.position.x, -v1.position.y, radius);
-        grd1.addColorStop(0, toRgb(v1.color, 1));
-        grd1.addColorStop(1, toRgb(v1.color, 0));
-
-        const grd2 = ctx.createRadialGradient(v2.position.x, -v2.position.y, 0, v2.position.x, -v2.position.y, radius);
-        grd2.addColorStop(0, toRgb(v2.color, 1));
-        grd2.addColorStop(1, toRgb(v2.color, 0));
-
-        const grd3 = ctx.createRadialGradient(v3.position.x, -v3.position.y, 0, v3.position.x, -v3.position.y, radius);
-        grd3.addColorStop(0, toRgb(v3.color, 1));
-        grd3.addColorStop(1, toRgb(v3.color, 0));
-
         ctx.beginPath();
         ctx.moveTo(v1.position.x, -v1.position.y);
         ctx.lineTo(v2.position.x, -v2.position.y);
@@ -321,6 +310,8 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
         // }
 
         if (!!options.wireframe) {
+            ctx.globalCompositeOperation = "source-over";
+            ctx.strokeStyle = "darkgray";
             ctx.lineWidth = 0.01;
             ctx.stroke();
         } else {
@@ -329,6 +320,19 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
             ctx.fill();
 
             ctx.globalCompositeOperation = "lighter";
+
+            const radius = myMath.length(myMath.sub(v1.position, v2.position));
+            const grd1 = ctx.createRadialGradient(v1.position.x, -v1.position.y, 0, v1.position.x, -v1.position.y, radius);
+            grd1.addColorStop(0, toRgb(v1.color, 1));
+            grd1.addColorStop(1, toRgb(v1.color, 0));
+    
+            const grd2 = ctx.createRadialGradient(v2.position.x, -v2.position.y, 0, v2.position.x, -v2.position.y, radius);
+            grd2.addColorStop(0, toRgb(v2.color, 1));
+            grd2.addColorStop(1, toRgb(v2.color, 0));
+    
+            const grd3 = ctx.createRadialGradient(v3.position.x, -v3.position.y, 0, v3.position.x, -v3.position.y, radius);
+            grd3.addColorStop(0, toRgb(v3.color, 1));
+            grd3.addColorStop(1, toRgb(v3.color, 0));
 
             ctx.fillStyle = grd1;
             ctx.fill();
