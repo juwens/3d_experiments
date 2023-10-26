@@ -1,6 +1,7 @@
 // sum.test.js
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import * as math from './math'
+import { vec } from './models';
 
 test('length(vector)', () => {
   expect(math.length({x:0,y:0,z:0})).toBe(0);
@@ -28,4 +29,65 @@ test('angle(vector, vector)', () => {
   expect(math.angle({x: 1, y: 0, z: 0}, {x: 0, y: 1, z: 0})).toBe(Math.PI/2);
   expect(math.angle({x: 1, y: 0, z: 0}, {x: -1, y: 0, z: 0})).toBe(Math.PI);
   expect(math.angle({x: 1, y: 0, z: 0}, {x: 0, y: -1, z: 0})).toBe(Math.PI/2);
+})
+
+describe("rotateY", () => {
+  test('rotateY(180°)', () => {
+    const v = math.transform({position: vec(1, 0, 0), normal: vec(1,0,0)}, math.rotateY(Math.PI));
+    expect(v.position.x).toBeCloseTo(-1);
+    expect(v.position.y).toBeCloseTo(0);
+    expect(v.position.z).toBeCloseTo(0);
+
+    expect(v.normal.x).toBeCloseTo(-1);
+    expect(v.normal.y).toBeCloseTo(0);
+    expect(v.normal.z).toBeCloseTo(0);
+  })
+
+  test('rotateY(90°)', () => {
+    const v = math.transform({position: vec(1, 0, 0), normal: vec(1,0,0)}, math.rotateY(Math.PI / 2));
+    expect(v.position.x).toBeCloseTo(0);
+    expect(v.position.y).toBeCloseTo(0);
+    expect(v.position.z).toBeCloseTo(-1);
+
+    expect(v.normal.x).toBeCloseTo(0);
+    expect(v.normal.y).toBeCloseTo(0);
+    expect(v.normal.z).toBeCloseTo(-1);
+  })
+
+  test('rotateY(-90°)', () => {
+    const v = math.transform({position: vec(1, 0, 0), normal: vec(1,0,0)}, math.rotateY(-Math.PI / 2));
+    expect(v.position.x).toBeCloseTo(0);
+    expect(v.position.y).toBeCloseTo(0);
+    expect(v.position.z).toBeCloseTo(1);
+
+    expect(v.normal.x).toBeCloseTo(0);
+    expect(v.normal.y).toBeCloseTo(0);
+    expect(v.normal.z).toBeCloseTo(1);
+  })
+
+  test('rotateY(270°)', () => {
+    const v = math.transform({position: vec(1, 0, 0), normal: vec(1,0,0)}, math.rotateY(Math.PI * 3/ 2));
+    expect(v.position.x).toBeCloseTo(0);
+    expect(v.position.y).toBeCloseTo(0);
+    expect(v.position.z).toBeCloseTo(1);
+
+    expect(v.normal.x).toBeCloseTo(0);
+    expect(v.normal.y).toBeCloseTo(0);
+    expect(v.normal.z).toBeCloseTo(1);
+  })
+})
+
+describe("rotateX", () => {
+  for (let angle = -Math.PI; angle < Math.PI; angle += (Math.PI/4)) {
+    test(`rotateX(<1,0,0>, ${angle / Math.PI * 180}°)`, () => {
+      const v = math.transform({position: vec(1, 0, 0), normal: vec(1,0,0)}, math.rotateX(angle));
+      expect(v.position.x).toBeCloseTo(1);
+      expect(v.position.y).toBeCloseTo(0);
+      expect(v.position.z).toBeCloseTo(0);
+
+      expect(v.normal.x).toBeCloseTo(1);
+      expect(v.normal.y).toBeCloseTo(0);
+      expect(v.normal.z).toBeCloseTo(0);
+    })
+  }
 })
