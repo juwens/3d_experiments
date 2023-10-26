@@ -343,7 +343,6 @@ export function crossProd(a: Vertex, b: Vertex): Vertex {
 export function unit(a: Vertex): Vertex {
     const len = length(a);
     const res = {x:a.x/len, y:a.y/len, z:a.z/len};
-    console.log(a, len, res, length(res));
     return res;
 }
 

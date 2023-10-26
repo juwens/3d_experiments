@@ -101,7 +101,7 @@ test("normal(a,b,c)", () => {
   expect(math.normal({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, { x: 0, y: 1, z: 0 })).toStrictEqual({ x: 0, y: 0, z: 1 });
 })
 
-test("matrxMul(a, b)", () => {
+test("matrixMul(a, b)", () => {
   const m1 : math.Mat4 = [
     [1, 2, 3, 4],
     [5, 6, 7, 8],
@@ -116,9 +116,9 @@ test("matrxMul(a, b)", () => {
   ];
   const expected : math.Mat4 = [
     [80, 90, 100, 110],
-    [192, 218, 244, 270],
-    [304, 346, 388, 430],
-    [416, 474, 532, 590],
+    [176, 202, 228, 254],
+    [272, 314, 356, 398],
+    [368, 426, 484, 542],
   ];
-  expect(mulMat4(m1, m2)).toBe(expected);
+  expect(mulMat4(m1, m2)).toStrictEqual(expected);
 })

@@ -33,7 +33,6 @@ class RenderOptions {
             .vectors()
             .then((x: VertexEx[]) => {
                 this.loadedVectors = x;
-                console.log(x);
             });
     }
     wireframe: boolean = false;
@@ -213,7 +212,6 @@ function startRender(canvas: HTMLCanvasElement) {
     console.log("startRender()", canvas);
 
     const ctx: CanvasRenderingContext2D = canvas.getContext("2d")!;
-    console.log(ctx.globalCompositeOperation);
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -291,7 +289,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const angleToView = angle(v1.normal, options.view.normal);
 
-        console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
+        //console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
 
         // culling
         if (!options.wireframe && angleToView < halfPi) {
@@ -318,12 +316,15 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
         //     context.strokeStyle = context.fillStyle = "hotpink";
         // }
 
+        ctx.globalCompositeOperation = "source-over";
+
+        const gradient = false;
         if (!!options.wireframe) {
-            ctx.globalCompositeOperation = "source-over";
             ctx.strokeStyle = "darkgray";
             ctx.lineWidth = 0.01;
             ctx.stroke();
-        } else {
+        } else if(gradient) {
+
             // fill with black
             ctx.fillStyle = "black";
             ctx.fill();
@@ -350,6 +351,10 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
             ctx.fill();
 
             ctx.fillStyle = grd3;
+            ctx.fill();
+        } else {
+            const lightAngle = angle(v1.normal, light.normal)
+            ctx.fillStyle = `hsl(48 100% ${lightAngle/Math.PI * 100}%)`;
             ctx.fill();
         }
     }
