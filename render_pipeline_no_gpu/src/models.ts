@@ -1,4 +1,4 @@
-import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, transformEx, translate, RGBA, unit, normal } from "./math";
+import { Vertex, VertexEx,transformEx, translate, RGBA, unit, normal } from "./math";
 
 const cos = Math.cos;
 const sin = Math.sin;

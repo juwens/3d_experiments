@@ -1,10 +1,7 @@
-"strict";
-
 export type Vertex = {x:number, y:number, z:number};
 export type VertexEx = { position: Vertex, normal: Vertex, color?: RGBA };
 export type Vec4 = [number, number, number, number];
 export type Mat4 = [Vec4, Vec4, Vec4, Vec4];
-export type float4 = [Vec4, Vec4, Vec4, Vec4];
 export type RGBA = [Octal, Octal, Octal, Octal?]
 export type Octal = ComputeRange<256>[number]
 
@@ -16,17 +13,6 @@ type ComputeRange<
         ? Result
         : ComputeRange<N, [...Result, Result['length']]>
     )
-
-
-
-function mulMat4(a: Mat4, b: Mat4): Mat4 {
-    return [
-        [a[0][0] * b[0][0], a[0][1] * b[0][1], a[0][2] * b[0][2], a[0][3] * b[0][3]],
-        [a[1][0] * b[1][0], a[1][1] * b[1][1], a[1][2] * b[1][2], a[1][3] * b[1][3]],
-        [a[2][0] * b[2][0], a[2][1] * b[2][1], a[2][2] * b[2][2], a[2][3] * b[2][3]],
-        [a[3][0] * b[3][0], a[3][1] * b[3][1], a[3][2] * b[3][2], a[3][3] * b[3][3]],
-    ];
-}
 
 export class Vector {
     public static create3(v: Vertex);
@@ -296,19 +282,26 @@ export function mul(matricies: Mat4[], vec: VertexEx) {
 
     for (let i = 0; i < matricies.length; i++) {
         const currMat = matricies[i];
-        for (let row = 0; row < currMat.length; row++) {
-            const currRow = currMat[row];
-            for (let col = 0; col < currRow.length; col++) {
-                m[row][col] =
-                    m[row][0] * currMat[col][0]
-                    + m[row][1] * currMat[col][1]
-                    + m[row][2] * currMat[col][2]
-                    + m[row][3] * currMat[col][3];
-            }
-        }
+        m = mulMat4(m, currMat);
     }
 
     return transformEx([vec], m)[0];
+}
+
+export function mulMat4(m1: Mat4, m2: Mat4): Mat4 {
+    const res : number[][] = new Array(4);
+    for (let row = 0; row < 4; row++) {
+        res[row] = new Array(4);
+        for (let col = 0; col < 4; col++) {
+            res[row][col] =
+                m1[row][0] * m2[0][col]
+                + m1[row][1] * m2[1][col]
+                + m1[row][2] * m2[2][col]
+                + m1[row][3] * m2[3][col];
+        }
+    }
+
+    return res as Mat4;
 }
 
 export function angle(a: Vertex, b: Vertex) {
