@@ -1,37 +1,33 @@
-export type Vertex = {x:number, y:number, z:number};
+export type Vertex = { x: number, y: number, z: number };
 export type VertexEx = { position: Vertex, normal: Vertex, color?: RGBA };
 export type Vec4 = [number, number, number, number];
 export type Mat4 = [Vec4, Vec4, Vec4, Vec4];
 export type RGBA = [Octal, Octal, Octal, Octal?]
 export type Octal = ComputeRange<256>[number]
 
-type ComputeRange<
-    N extends number,
-    Result extends Array<unknown> = [],
-> =
+type ComputeRange<N extends number, Result extends Array<unknown> = []> =
     (Result['length'] extends N
         ? Result
         : ComputeRange<N, [...Result, Result['length']]>
     )
 
 export class Vector {
-    public static create3(v: Vertex);
-    public static create3(v: VertexEx);
-    public static create3(v: Vertex | VertexEx) {
-        if (v === undefined){
+    public static create3(vec: Vertex);
+    public static create3(vec: VertexEx);
+    public static create3(obj: Vertex | VertexEx) {
+        if (obj === undefined || obj === null) {
             throw "undefined";
         }
 
-        if (Array.isArray(v)) {
-            return new Vector3(v[0], v[1], v[2]);
+        if (Array.isArray(obj)) {
+            return new Vector3(obj[0], obj[1], obj[2]);
         }
-        const vo = v as object;
 
-        if(vo !== undefined && vo.hasOwnProperty("v")) {
-            const vex = v as VertexEx;
+        if (obj !== undefined && "v" in obj) {
+            const vex = obj as VertexEx;
             return new Vector3(vex.position.x, vex.position.y, vex.position.z);
         }
-        const vec = v as Vertex;
+        const vec = obj as Vertex;
         return new Vector3(vec.x, vec.y, vec.z);
     }
     //     public static create4(v: Vec3 | Vec4) {
@@ -65,7 +61,7 @@ export class Vector3 {
     }
 
     public toVertex(): Vertex {
-        return {x: this.x, y: this.y, z: this.z};
+        return { x: this.x, y: this.y, z: this.z };
     }
 
     public toString(precision?: number): string {
@@ -177,7 +173,7 @@ export function deg(rad: number): number {
     return rad / Math.PI / 2 * 360;
 }
 
-export function transformEx1(vec: VertexEx, translation: Mat4): VertexEx{
+export function transformEx1(vec: VertexEx, translation: Mat4): VertexEx {
     return transformEx([vec], translation)[0];
 }
 
@@ -196,16 +192,16 @@ export function transformEx(vecs: VertexEx[], translation: Mat4): VertexEx[] {
     }
 }
 
-function transformSingleVertex(vec: Vertex, mat : Mat4) : Vertex {
+function transformSingleVertex(vec: Vertex, mat: Mat4): Vertex {
     const x = vec.x;
     const y = vec.y;
     const z = vec.z;
     const w = x * mat[3][0] + y * mat[3][1] + z * mat[3][2] + mat[3][3];
 
     return {
-        x: (x * mat[0][0] + y * mat[0][1] + z * mat[0][2] + mat[0][3])/w,
-        y: (x * mat[1][0] + y * mat[1][1] + z * mat[1][2] + mat[1][3])/w,
-        z: (x * mat[2][0] + y * mat[2][1] + z * mat[2][2] + mat[2][3])/w,
+        x: (x * mat[0][0] + y * mat[0][1] + z * mat[0][2] + mat[0][3]) / w,
+        y: (x * mat[1][0] + y * mat[1][1] + z * mat[1][2] + mat[1][3]) / w,
+        z: (x * mat[2][0] + y * mat[2][1] + z * mat[2][2] + mat[2][3]) / w,
     };
 }
 
@@ -258,12 +254,12 @@ export function rotateZ(phi: number): Mat4 {
 }
 
 export function orhto(fov: number, near: number, far: number): Mat4 {
-    const scale = 1 / (Math.tan(fov/2));
+    const scale = 1 / (Math.tan(fov / 2));
     return [
         [scale, 0, 0, 0],
         [0, scale, 0, 0],
-        [0, 0, -far/(far-near), -1],
-        [0, 0, -far*near/(far-near), 0],
+        [0, 0, -far / (far - near), -1],
+        [0, 0, -far * near / (far - near), 0],
     ];
 }
 
@@ -275,8 +271,6 @@ export function noopProjection(): Mat4 {
         [0, 0, 0, 1],
     ];
 }
-
-type Length<Type extends readonly unknown[]> = Type['length']
 
 export function mul(matricies: Mat4[], vec: VertexEx) {
     let m = noopProjection();
@@ -290,7 +284,7 @@ export function mul(matricies: Mat4[], vec: VertexEx) {
 }
 
 export function mulMat4(m1: Mat4, m2: Mat4): Mat4 {
-    const res : number[][] = new Array(4);
+    const res: number[][] = new Array(4);
     for (let row = 0; row < 4; row++) {
         res[row] = new Array(4);
         for (let col = 0; col < 4; col++) {
@@ -317,17 +311,17 @@ export function dotProd(a: Vertex, b: Vertex): number {
     return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 
-export function length(v : Vertex): number {
+export function length(v: Vertex): number {
     return Math.sqrt(sq(v.x) + sq(v.y) + sq(v.z));
 }
 
-export function sq(value: number) : number {
+export function sq(value: number): number {
     return value * value;
 }
 
 export function sub(a: Vertex, b: Vertex): Vertex {
     return {
-        x:a.x - b.x,
+        x: a.x - b.x,
         y: a.y - b.y,
         z: a.z - b.z
     };
@@ -343,11 +337,11 @@ export function crossProd(a: Vertex, b: Vertex): Vertex {
 
 export function unit(a: Vertex): Vertex {
     const len = length(a);
-    const res = {x:a.x/len, y:a.y/len, z:a.z/len};
+    const res = { x: a.x / len, y: a.y / len, z: a.z / len };
     return res;
 }
 
-export function normal(a: Vertex, b:Vertex, c:Vertex): Vertex {
+export function normal(a: Vertex, b: Vertex, c: Vertex): Vertex {
     const u = sub(b, a);
     const v = sub(c, a);
     return crossProd(u, v);

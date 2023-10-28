@@ -32,10 +32,9 @@ function nullRefError(): never {
     throw new Error("null");
 }
 
-type Mat4 = [number,number,number,number,number,number,number,number,number,number,number,number,number,number,number,number];
+type Mat4 = [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
 
 class CubeDemo {
-
     canvas: HTMLCanvasElement;
     gl: WebGLRenderingContext;
     transforms: {
@@ -48,10 +47,14 @@ class CubeDemo {
         position: number,
         color: number,
     };
-    buffers: { positions: number[]; colors: number[]; elements: number[]; };
+    buffers: {
+        positions: WebGLBuffer,
+        colors: WebGLBuffer,
+        elements: WebGLBuffer,
+    };
     webglProgram: WebGLProgram;
-    
-    constructor(canvas : HTMLCanvasElement) {
+
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
 
         this.gl = canvas.getContext("webgl") ?? nullRefError();
@@ -104,9 +107,9 @@ class CubeDemo {
         this.transforms.model = MDN.multiplyArrayOfMatrices([
             MDN.translateMatrix(0, 0, -20), // step 4
             //rotateY,  // step 3
-            MDN.rotateYMatrix(Math.PI/4),
+            MDN.rotateYMatrix(Math.PI / 4),
             //rotateX,  // step 2
-            MDN.rotateXMatrix(Math.PI/4),
+            MDN.rotateXMatrix(Math.PI / 4),
             MDN.scaleMatrix(5, 5, 5)     // step 1
         ]);
     };
@@ -117,7 +120,7 @@ class CubeDemo {
 
         // Compute our matrices
         this.computeModelMatrix(now);
-        this.transforms.projection = MDN.perspectiveMatrix(Math.PI*0.5, 1, 1, 50);
+        this.transforms.projection = MDN.perspectiveMatrix(Math.PI * 0.5, 1, 1, 50);
         // this.transforms.projection = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 
         // Update the data going to the GPU
@@ -232,16 +235,16 @@ class MDN {
 
     // Take the data for a cube and bind the buffers for it.
     // Return an object collection of the buffers
-    public static createBuffersForCube(gl, cube) {
-        var positions = gl.createBuffer();
+    public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): { positions: WebGLBuffer; colors: WebGLBuffer; elements: WebGLBuffer; } {
+        const positions = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ARRAY_BUFFER, positions);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.positions), gl.STATIC_DRAW);
 
-        var colors = gl.createBuffer();
+        const colors = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ARRAY_BUFFER, colors);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.colors), gl.STATIC_DRAW);
 
-        var elements = gl.createBuffer();
+        const elements = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cube.elements), gl.STATIC_DRAW);
 
@@ -272,7 +275,7 @@ class MDN {
         ];
     }
 
-    public static multiplyMatrices(a : Mat4, b: Mat4) : Mat4 {
+    public static multiplyMatrices(a: Mat4, b: Mat4): Mat4 {
         // TODO - Simplify for explanation
         // currently taken from https://github.com/toji/gl-matrix/blob/master/src/gl-matrix/mat4.js#L306-L337
 
@@ -430,7 +433,7 @@ class MDN {
         return shader
     }
 
-    public static linkProgram(gl : WebGLRenderingContext, vertexShader, fragmentShader) : WebGLProgram {
+    public static linkProgram(gl: WebGLRenderingContext, vertexShader, fragmentShader): WebGLProgram {
         var program = gl.createProgram() ?? nullRefError();
 
         gl.attachShader(program, vertexShader);

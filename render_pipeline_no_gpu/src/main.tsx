@@ -1,7 +1,7 @@
-import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
-import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, rotateZ, scale, transformEx, translate, angle, RGBA } from "./math";
+import React, { useState } from "react";
+import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
-import { Cube_old, Plane, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
+import { Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -378,11 +378,12 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     drawPerfStats(ctx);
 
-    function toRgb(c: RGBA | undefined, alpha) {
-        if (c === undefined) {
-            return "hotpink";
+    function toRgb(c: RGBA | undefined | null, alpha: number | null | undefined) {
+        if (Array.isArray(c)) {
+            return `rgb(${c[0]} ${c[1]} ${c[2]} / ${(alpha ?? 1) * 100}%)`
         }
-        return `rgb(${c[0]} ${c[1]} ${c[2]} / ${alpha * 100}%)`
+
+        return "hotpink";
     }
 }
 
