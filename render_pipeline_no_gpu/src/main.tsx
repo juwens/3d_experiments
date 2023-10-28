@@ -1,10 +1,11 @@
 import React, { FormEvent, FormEventHandler, useEffect, useState } from "react";
-import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, cameraProjection, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, rotateZ, scale, transformEx, translate, angle, RGBA } from "./math";
+import { Mat4, Vertex, VertexEx, Vec4, Vector, Vector3, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, rotateZ, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
 import { Cube_old, Plane, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
+import * as wgr from "./webglRender"
 
 enum Models {
     Cube,
@@ -118,11 +119,22 @@ document.addEventListener("keydown", event => {
 new EventSource('/esbuild').addEventListener('change', () => location.reload());
 
 document.addEventListener("DOMContentLoaded", event => {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    canvas.width = 600;
-    canvas.height = 600;
-    canvas.style.border = "2px black solid";
-    startRender(canvas);
+    {
+        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+        canvas.width = 400;
+        canvas.height = 400;
+        canvas.style.border = "2px black solid";
+        startRender(canvas);
+    }
+    {
+        const canvas = document.getElementById("webgl-canvas") as HTMLCanvasElement;
+        canvas.width = 400;
+        canvas.height = 400;
+        canvas.style.border = "2px black solid";
+        wgr.startWebglRender(canvas);
+    }
+
+
 
     const root = createRoot(document.getElementById("app") as HTMLDivElement);
     root.render(<>
@@ -241,7 +253,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     ctx.clearRect(-2, -2, 4, 4);
 
-    const camProjection = noopProjection();
+    const camProjection = myMath.orhto(120/180 * Math.PI, -5, 5);
     const modelViewProj = noopProjection();
 
     let vectors = options.loadedVectors;

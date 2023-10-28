@@ -257,12 +257,13 @@ export function rotateZ(phi: number): Mat4 {
     ];
 }
 
-export function cameraProjection(): Mat4 {
+export function orhto(fov: number, near: number, far: number): Mat4 {
+    const scale = 1 / (Math.tan(fov/2));
     return [
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 1, 0],
+        [scale, 0, 0, 0],
+        [0, scale, 0, 0],
+        [0, 0, -far/(far-near), -1],
+        [0, 0, -far*near/(far-near), 0],
     ];
 }
 
