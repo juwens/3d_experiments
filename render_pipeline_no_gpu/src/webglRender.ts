@@ -47,11 +47,7 @@ class CubeDemo {
         position: number,
         color: number,
     };
-    buffers: {
-        positions: WebGLBuffer,
-        colors: WebGLBuffer,
-        elements: WebGLBuffer,
-    };
+    buffers: CreateBufferResult;
     webglProgram: WebGLProgram;
 
     constructor(canvas: HTMLCanvasElement) {
@@ -127,7 +123,7 @@ class CubeDemo {
         this.updateAttributesAndUniforms();
 
         // Perform the actual draw
-        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, this.buffers.elementsCount, gl.UNSIGNED_SHORT, 0);
 
         // Run the draw as a loop
         requestAnimationFrame(this.draw.bind(this));
@@ -156,8 +152,13 @@ class CubeDemo {
 
 }
 
+interface CreateBufferResult { 
+    positions: WebGLBuffer;
+    colors: WebGLBuffer;
+    elements: WebGLBuffer;
+    elementsCount:number;
+};
 class MDN {
-
     // Define the data that is needed to make a 3d cube
     public static createCubeData() {
         var positions = [
@@ -235,7 +236,7 @@ class MDN {
 
     // Take the data for a cube and bind the buffers for it.
     // Return an object collection of the buffers
-    public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): { positions: WebGLBuffer; colors: WebGLBuffer; elements: WebGLBuffer; } {
+    public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
         const positions = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ARRAY_BUFFER, positions);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.positions), gl.STATIC_DRAW);
@@ -251,7 +252,8 @@ class MDN {
         return {
             positions: positions,
             colors: colors,
-            elements: elements
+            elements: elements,
+            elementsCount: cube.elements.length,
         }
     }
 
