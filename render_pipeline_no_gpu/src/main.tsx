@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
-import { Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
+import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -21,7 +21,7 @@ const runRenderLoop = false;
 
 const modelOptions = new Map<Models, { label: string, vectors: () => Promise<VertexEx[]> }>();
 modelOptions.set(Models.Triangle, { label: 'Triangle', vectors: Triangle });
-modelOptions.set(Models.Cube, { label: 'Cube', vectors: Cube_old });
+modelOptions.set(Models.Cube, { label: 'Cube', vectors: Cube_from_mdn });
 // modelOptions.set(Models.Plane, { label: 'Plane', vectors: Plane });
 modelOptions.set(Models.Sphere, { label: 'Sphere', vectors: Sphere });
 modelOptions.set(Models.TeapotLow, { label: 'Teapot low (3.5k triangles)', vectors: Teapot_3k });
@@ -253,7 +253,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     ctx.clearRect(-2, -2, 4, 4);
 
-    const camProjection = myMath.orhto(120/180 * Math.PI, -5, 5);
+    const camProjection = noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
     const modelViewProj = noopProjection();
 
     let vectors = options.loadedVectors;
@@ -272,7 +272,7 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     vectors = vectors.map(x => {
         return multiMul([
-            scale(0.5, 0.5, 0.5),
+            //scale(0.5, 0.5, 0.5),
             rotateY(renderOpts.rotationHorizontal),
             rotateX(renderOpts.rotationVertical),
             translate(renderOpts.x, 0, renderOpts.z),
@@ -280,6 +280,8 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
         ], x);
     });
     
+    console.log(vectors);
+
     const light: VertexEx = transformEx([options.light], camProjection)[0];
 
     const transformations = [

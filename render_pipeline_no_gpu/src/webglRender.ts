@@ -33,6 +33,7 @@ function nullRefError(): never {
 }
 
 type Mat4 = [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
+type float4 = [number, number, number, number];
 
 class CubeDemo {
     canvas: HTMLCanvasElement;
@@ -158,9 +159,9 @@ interface CreateBufferResult {
     elements: WebGLBuffer;
     elementsCount:number;
 };
-class MDN {
+export class MDN {
     // Define the data that is needed to make a 3d cube
-    public static createCubeData() {
+    public static createCubeData(): { positions: number[]; elements: number[]; colors: number[]; } {
         var positions = [
             // Front face
             -1.0, -1.0, 1.0,
@@ -199,7 +200,7 @@ class MDN {
             -1.0, 1.0, -1.0
         ];
 
-        var colorsOfFaces = [
+        var colorsOfFaces : float4[] = [
             [0.3, 1.0, 1.0, 1.0],    // Front face: cyan
             [1.0, 0.3, 0.3, 1.0],    // Back face: red
             [0.3, 1.0, 0.3, 1.0],    // Top face: green
@@ -211,7 +212,7 @@ class MDN {
         var colors: number[] = [];
 
         for (var j = 0; j < 6; j++) {
-            var polygonColor = colorsOfFaces[j];
+            const polygonColor : float4 = colorsOfFaces[j];
 
             for (var i = 0; i < 4; i++) {
                 colors = colors.concat(polygonColor);
@@ -225,7 +226,7 @@ class MDN {
             12, 13, 14, 12, 14, 15,   // bottom
             16, 17, 18, 16, 18, 19,   // right
             20, 21, 22, 20, 22, 23    // left
-        ]
+        ];
 
         return {
             positions: positions,
@@ -236,7 +237,7 @@ class MDN {
 
     // Take the data for a cube and bind the buffers for it.
     // Return an object collection of the buffers
-    public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
+    public static createBuffersForCube(gl: WebGLRenderingContext, cube:{ positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
         const positions = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ARRAY_BUFFER, positions);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.positions), gl.STATIC_DRAW);

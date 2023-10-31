@@ -1,4 +1,5 @@
-import { Vertex, VertexEx,transformEx, translate, RGBA, unit, normal } from "./math";
+import { Vertex, VertexEx, transformEx, translate, RGBA, unit, normal, Octal } from "./math";
+import { MDN } from "./webglRender";
 
 const cos = Math.cos;
 const sin = Math.sin;
@@ -6,8 +7,8 @@ const sin = Math.sin;
 export async function Triangle(): Promise<VertexEx[]> {
     return new Promise(x => {
         const edge = 1;
-        const halfWidth = Math.sin(30/180 * Math.PI) * edge;
-        const height = Math.cos(30/180 * Math.PI) * edge;
+        const halfWidth = Math.sin(30 / 180 * Math.PI) * edge;
+        const height = Math.cos(30 / 180 * Math.PI) * edge;
         x([
             {
                 position: vec(-halfWidth, 0, 0),
@@ -123,24 +124,42 @@ export function Plane(): Promise<Vertex[]> {
     });
 }
 
-export function Cube_from_edges(): Promise<Vertex[]> {
-    return new Promise<Vertex[]>(x => {
-        const res = edgesToCube(
-            {
-                ltf: vec(0, 1, 0),
-                rtf: vec(1, 1, 0),
-                lbf: vec(0, 0, 0),
-                rbf: vec(1, 0, 0)
-            }
-        );
+export function Cube_from_mdn(): Promise<VertexEx[]> {
+    return new Promise<VertexEx[]>(x => {
+        const data = MDN.createCubeData();
+
+        const vertices: { v: Vertex, c: RGBA }[] = [];
+
+        // numbers to vertices
+        for (let i = 0; i < data.elements.length; i += 3) {
+            const x = data.positions[i];
+            const y = data.positions[i + 1];
+            const z = data.positions[i + 2];
+            const c = data.colors.slice(i, i+3);
+            const rgb = colorFromZeroToOne(c[0], c[1], c[2]);
+            vertices.push({ v: vec(x, y, z), c: rgb });
+        }
+
+        const res: VertexEx[] = [];
+
+        for (let i = 0; i < vertices.length; i += 3) {
+            const v1 = vertices[i];
+            const v2 = vertices[i + 1];
+            const v3 = vertices[i + 2];
+            const norm = normal(v1.v, v2.v, v3.v);
+            res.push({ position: v1.v, normal: norm, color: v1.c });
+            res.push({ position: v2.v, normal: norm, color: v2.c });
+            res.push({ position: v3.v, normal: norm, color: v3.c });
+        }
+
         x(res);
     });
 }
 
 export function Cube_old(): Promise<VertexEx[]> {
     return new Promise<VertexEx[]>(x => {
-        const vectors : VertexEx[] = [];
-        
+        const vectors: VertexEx[] = [];
+
         const d = 0.3333;
 
         // front
@@ -149,7 +168,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(-d, d, -d),
             vec(d, d, -d),
             vec(d, -d, -d),
-        ], [255,0,0]));
+        ], [255, 0, 0]));
 
 
         // back
@@ -158,7 +177,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(d, d, d),
             vec(-d, d, d),
             vec(-d, -d, d),
-        ], [0,255,0]));
+        ], [0, 255, 0]));
 
         // top
         vectors.push(...quadsToTriangles([
@@ -166,7 +185,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(-d, d, d),
             vec(d, d, d),
             vec(d, d, -d),
-        ], [0,0,255]));
+        ], [0, 0, 255]));
 
         // bottom
         vectors.push(...quadsToTriangles([
@@ -174,7 +193,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(d, -d, d),
             vec(-d, -d, d),
             vec(-d, -d, -d),
-        ], [255,255,0]));
+        ], [255, 255, 0]));
 
         // right
         vectors.push(...quadsToTriangles([
@@ -182,7 +201,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(d, -d, d),
             vec(d, -d, -d),
             vec(d, d, -d),
-        ], [0,255, 255]));
+        ], [0, 255, 255]));
 
         // left
         vectors.push(...quadsToTriangles([
@@ -190,7 +209,7 @@ export function Cube_old(): Promise<VertexEx[]> {
             vec(-d, -d, -d),
             vec(-d, -d, d),
             vec(-d, d, d),
-        ],  [255, 0, 255]));
+        ], [255, 0, 255]));
 
         x(vectors);
     });
@@ -223,21 +242,25 @@ export function quadsToTriangles(vectors: Vertex[], color: RGBA): VertexEx[] {
     return vertices;
 }
 
-interface CubeEdges {
-    ltf: Vertex;
-    rtf: Vertex;
-    lbf: Vertex;
-    rbf: Vertex;
-}
-
-export function edgesToCube(edges: CubeEdges): Vertex[] {
-    return [];
-}
-
 export function vec(x: number, y: number, z: number): Vertex {
     return {
-        x: x ,
+        x: x,
         y: y,
         z: z,
-    };    
+    };
+}
+
+export function color(r: Octal, g: Octal, b: Octal): RGBA {
+    return [r, g, b];
+}
+
+function colorFromZeroToOne(r: number, g: number, b: number) {
+    return color(toOctal(r * 255), toOctal(g * 255), toOctal(b * 255));
+}
+
+function toOctal(n: number): Octal {
+    if (n >= 0 && n <= 255) {
+        return n as Octal;
+    }
+    throw `number '${n}' is out of range`;
 }
