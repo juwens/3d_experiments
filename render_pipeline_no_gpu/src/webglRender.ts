@@ -1,3 +1,5 @@
+import { Float16, Float4, RenderOptions, nullRefError } from "./common";
+
 const vertexShaderSource = `
     attribute vec3 position;
     attribute vec4 color;
@@ -21,22 +23,9 @@ const fragmentShaderSource = `
         gl_FragColor = vColor;
         // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
-`
+`;
 
-export function startWebglRender(canvas: HTMLCanvasElement) {
-    var cube = new CubeDemo(canvas);
-    cube.draw();
-}
-
-function nullRefError(): never {
-    throw new Error("null");
-}
-
-type Mat4 = [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number];
-type float4 = [number, number, number, number];
-
-class CubeDemo {
-    canvas: HTMLCanvasElement;
+export class CubeDemo {
     gl: WebGLRenderingContext;
     transforms: {
         model: number[],
@@ -50,11 +39,11 @@ class CubeDemo {
     };
     buffers: CreateBufferResult;
     webglProgram: WebGLProgram;
+    renderParams: RenderOptions;
 
-    constructor(canvas: HTMLCanvasElement) {
-        this.canvas = canvas;
-
-        this.gl = canvas.getContext("webgl") ?? nullRefError();
+    constructor(gl: WebGLRenderingContext, opts: RenderOptions) {
+        this.renderParams = opts ?? nullRefError();
+        this.gl = gl ?? nullRefError();
 
         this.transforms = {
             model: [],
@@ -91,33 +80,19 @@ class CubeDemo {
         return webglProgram;
     };
 
-    public computeModelMatrix(now) {
-        //See /shared/matrices.js for the definitions of these matrix functions
-
-        // Rotate a slight tilt
-        var rotateX = MDN.rotateXMatrix(now * 0.0003);
-
-        // Rotate according to time
-        var rotateY = MDN.rotateYMatrix(now * 0.0005);
-
-        // Multiply together, make sure and read them in opposite order
-        this.transforms.model = MDN.multiplyArrayOfMatrices([
-            MDN.translateMatrix(0, 0, -20), // step 4
-            //rotateY,  // step 3
-            MDN.rotateYMatrix(Math.PI / 4),
-            //rotateX,  // step 2
-            MDN.rotateXMatrix(Math.PI / 4),
-            MDN.scaleMatrix(5, 5, 5)     // step 1
-        ]);
-    };
-
     public draw() {
         var gl = this.gl;
-        var now = Date.now();
 
-        // Compute our matrices
-        this.computeModelMatrix(now);
-        this.transforms.projection = MDN.perspectiveMatrix(Math.PI * 0.5, 1, 1, 50);
+        const state = this.renderParams.state;
+
+        this.transforms.model = MDN.multiplyArrayOfMatrices([
+            MDN.translateMatrix(state.x, state.y, state.z), // step 4
+            MDN.rotateYMatrix(state.rotY), // step 3
+            MDN.rotateXMatrix(state.rotX), // step 2
+            MDN.scaleMatrix(5, 5, 5)     // step 1
+        ]);
+
+        this.transforms.projection = MDN.perspectiveMatrix(state.fov, 1, state.near, state.far);
         // this.transforms.projection = [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 
         // Update the data going to the GPU
@@ -148,16 +123,14 @@ class CubeDemo {
         gl.vertexAttribPointer(this.handlers.color, 4, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.elements);
-
     };
-
 }
 
-interface CreateBufferResult { 
+interface CreateBufferResult {
     positions: WebGLBuffer;
     colors: WebGLBuffer;
     elements: WebGLBuffer;
-    elementsCount:number;
+    elementsCount: number;
 };
 export class MDN {
     // Define the data that is needed to make a 3d cube
@@ -200,7 +173,7 @@ export class MDN {
             -1.0, 1.0, -1.0
         ];
 
-        var colorsOfFaces : float4[] = [
+        var colorsOfFaces: Float4[] = [
             [0.3, 1.0, 1.0, 1.0],    // Front face: cyan
             [1.0, 0.3, 0.3, 1.0],    // Back face: red
             [0.3, 1.0, 0.3, 1.0],    // Top face: green
@@ -212,7 +185,7 @@ export class MDN {
         var colors: number[] = [];
 
         for (var j = 0; j < 6; j++) {
-            const polygonColor : float4 = colorsOfFaces[j];
+            const polygonColor: Float4 = colorsOfFaces[j];
 
             for (var i = 0; i < 4; i++) {
                 colors = colors.concat(polygonColor);
@@ -237,7 +210,7 @@ export class MDN {
 
     // Take the data for a cube and bind the buffers for it.
     // Return an object collection of the buffers
-    public static createBuffersForCube(gl: WebGLRenderingContext, cube:{ positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
+    public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
         const positions = gl.createBuffer() || nullRefError();
         gl.bindBuffer(gl.ARRAY_BUFFER, positions);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.positions), gl.STATIC_DRAW);
@@ -262,7 +235,7 @@ export class MDN {
         return "matrix3d(" + array.join(',') + ")";
     }
 
-    public static multiplyPoint(matrix, point) {
+    public static multiplyPoint(matrix, point) : Float4 {
         var x = point[0], y = point[1], z = point[2], w = point[3];
 
         var c1r1 = matrix[0], c2r1 = matrix[1], c3r1 = matrix[2], c4r1 = matrix[3],
@@ -278,11 +251,11 @@ export class MDN {
         ];
     }
 
-    public static multiplyMatrices(a: Mat4, b: Mat4): Mat4 {
+    public static multiplyMatrices(a: Float16, b: Float16): Float16 {
         // TODO - Simplify for explanation
         // currently taken from https://github.com/toji/gl-matrix/blob/master/src/gl-matrix/mat4.js#L306-L337
 
-        var result: Mat4 = new Array<number>(16) as Mat4;
+        var result: Float16 = new Array<number>(16) as Float16;
 
         var a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
             a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
@@ -327,7 +300,7 @@ export class MDN {
         return inputMatrix;
     }
 
-    public static rotateXMatrix(a) {
+    public static rotateXMatrix(a) : Float16  {
         var cos = Math.cos;
         var sin = Math.sin;
 
@@ -339,7 +312,7 @@ export class MDN {
         ];
     }
 
-    public static rotateYMatrix(a) {
+    public static rotateYMatrix(a) : Float16  {
         var cos = Math.cos;
         var sin = Math.sin;
 
@@ -351,7 +324,7 @@ export class MDN {
         ];
     }
 
-    public static rotateZMatrix(a) {
+    public static rotateZMatrix(a) : Float16  {
         var cos = Math.cos;
         var sin = Math.sin;
 
@@ -363,7 +336,7 @@ export class MDN {
         ];
     }
 
-    public static translateMatrix(x, y, z) {
+    public static translateMatrix(x, y, z) : Float16  {
         return [
             1, 0, 0, 0,
             0, 1, 0, 0,
@@ -372,7 +345,7 @@ export class MDN {
         ];
     }
 
-    public static scaleMatrix(w, h, d) {
+    public static scaleMatrix(w, h, d) : Float16  {
         return [
             w, 0, 0, 0,
             0, h, 0, 0,
@@ -381,7 +354,7 @@ export class MDN {
         ];
     }
 
-    public static perspectiveMatrix(fieldOfViewInRadians, aspectRatio, near, far) {
+    public static perspectiveMatrix(fieldOfViewInRadians, aspectRatio, near, far) : Float16 {
         // Construct a perspective matrix
 
         /*
@@ -402,7 +375,7 @@ export class MDN {
         ];
     }
 
-    public static orthographicMatrix(left, right, bottom, top, near, far) {
+    public static orthographicMatrix(left, right, bottom, top, near, far) : Float16  {
         // Each of the parameters represents the plane of the bounding box
 
         var lr = 1 / (left - right);

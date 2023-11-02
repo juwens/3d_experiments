@@ -1,120 +1,55 @@
-import React, { useState } from "react";
-import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
+import React, { useEffect, useState } from "react";
+import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, deg2rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
 import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
 import * as wgr from "./webglRender"
-
-enum Models {
-    Cube,
-    TeapotLow,
-    TeapotMid,
-    TeapotHigh,
-    Plane,
-    Sphere,
-    Triangle
-}
+import { Models, RenderOptions, ModelsMap, nullRefError, useRenderParamsStore as useRenderParamsStore, Float16 } from "./common";
+import * as inHdlr from "./inputHandler"
+import { MDN } from "./webglRender";
 
 const runRenderLoop = false;
 
-const modelOptions = new Map<Models, { label: string, vectors: () => Promise<VertexEx[]> }>();
+const modelOptions = new ModelsMap();
 modelOptions.set(Models.Triangle, { label: 'Triangle', vectors: Triangle });
-modelOptions.set(Models.Cube, { label: 'Cube', vectors: Cube_from_mdn });
+modelOptions.set(Models.Cube, { label: 'Cube (MDN)', vectors: Cube_from_mdn });
 // modelOptions.set(Models.Plane, { label: 'Plane', vectors: Plane });
 modelOptions.set(Models.Sphere, { label: 'Sphere', vectors: Sphere });
 modelOptions.set(Models.TeapotLow, { label: 'Teapot low (3.5k triangles)', vectors: Teapot_3k });
 modelOptions.set(Models.TeapotMid, { label: 'Teapot mid (19k triangles)', vectors: Teapot_19k });
 modelOptions.set(Models.TeapotHigh, { label: 'Teapot high (150k triangles)', vectors: Teapot_150k });
 
-class RenderOptions {
-    constructor(public readonly initialModel: Models) {
-        modelOptions.get(initialModel)!
-            .vectors()
-            .then((x: VertexEx[]) => {
-                this.loadedVectors = x;
-            });
-    }
-    wireframe: boolean = false;
-    light: VertexEx = {
-        position: vec(0, 0, 0),
-        normal: vec(-1, -1, 0.5)
-    };
-    view: VertexEx = {
-        position: vec(0, 0, -3),
-        normal: vec(0, 0, 1),
-    };
-    loadedVectors: VertexEx[] = [];
-    z = 0;
-    x = 0;
-    rotationHorizontal = 0;
-    rotationVertical = 0;
-}
-
-const renderOpts = new RenderOptions(Models.Cube);
-
-function renderFrame() {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-    render(ctx, renderOpts);
-}
-
-document.addEventListener("keydown", event => {
-    //console.log("keydown: ", event);
-
-    const angleStep = Math.PI / 20
-    const step = 0.05;
-
-    if (event.key === "ArrowRight") {
-        renderOpts.rotationHorizontal += angleStep;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "ArrowLeft") {
-        renderOpts.rotationHorizontal -= angleStep;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "ArrowUp") {
-        renderOpts.rotationVertical += angleStep;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "ArrowDown") {
-        renderOpts.rotationVertical -= angleStep;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "w") {
-        renderOpts.z -= step;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "s") {
-        renderOpts.z += step;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "a") {
-        renderOpts.x += step;
-        renderFrame();
-        return;
-    }
-
-    if (event.key === "d") {
-        renderOpts.x -= step;
-        renderFrame();
-        return;
-    }
+useRenderParamsStore.setState({
+    x: 0,
+    y: 0,
+    z: -30,
+    fov: Math.PI * 0.5,
+    rotX: Math.PI / 4,
+    rotY: Math.PI / 4,
+    near: 1,
+    far: 200,
 });
 
+useRenderParamsStore.subscribe(x => {
+    drawFrame();
+});
+
+inHdlr.setupInputHandler();
+
+const renderParams = new RenderOptions(Models.Cube, modelOptions, useRenderParamsStore);
+let mdnRenderer: wgr.CubeDemo;
+
+function drawFrame() {
+    setTimeout(() => {
+        mdnRenderer.draw();
+    });
+
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    draw(ctx, renderParams);
+}
 
 new EventSource('/esbuild').addEventListener('change', () => location.reload());
 
@@ -127,14 +62,14 @@ document.addEventListener("DOMContentLoaded", event => {
         startRender(canvas);
     }
     {
-        const canvas = document.getElementById("webgl-canvas") as HTMLCanvasElement;
+        const canvas = (document.getElementById("webgl-canvas") ?? nullRefError()) as HTMLCanvasElement;
         canvas.width = 400;
         canvas.height = 400;
         canvas.style.border = "2px black solid";
-        wgr.startWebglRender(canvas);
+        mdnRenderer = new wgr.CubeDemo(canvas.getContext("webgl") ?? nullRefError(), renderParams);
     }
 
-
+    drawFrame();
 
     const root = createRoot(document.getElementById("app") as HTMLDivElement);
     root.render(<>
@@ -143,32 +78,95 @@ document.addEventListener("DOMContentLoaded", event => {
 });
 
 function MyApp() {
+    const setX = useRenderParamsStore(state => state.setX);
+    const setY = useRenderParamsStore(state => state.setY);
+    const setZ = useRenderParamsStore(state => state.setZ);
+    const setRotX = useRenderParamsStore(state => state.setRotX);
+    const setRotY = useRenderParamsStore(state => state.setRotY);
+    const setRotZ = useRenderParamsStore(state => state.setRotZ);
+    const setFov = useRenderParamsStore(state => state.setFov);
+    const setNear = useRenderParamsStore(state => state.setNear);
+    const setFar = useRenderParamsStore(state => state.setFar);
+
+    const x = useRenderParamsStore(state => state.x);
+    const y = useRenderParamsStore(state => state.y);
+    const z = useRenderParamsStore(state => state.z);
+    const rotX = useRenderParamsStore((state) => state.rotX);
+    const rotY = useRenderParamsStore((state) => state.rotY);
+    const fov = useRenderParamsStore((state) => state.fov);
+    const near = useRenderParamsStore((state) => state.near);
+    const far = useRenderParamsStore((state) => state.far);
+
+    const sliderWidth = 300;
     return (<>
         <div style={{ width: 400 }}>
             <label>
                 wireframe:
                 <input name="wireframe" type="checkbox" onChange={function (e) {
-                    renderOpts.wireframe = !renderOpts.wireframe;
-                    renderFrame();
+                    renderParams.wireframe = !renderParams.wireframe;
+                    drawFrame();
                 }} />
             </label>
             <hr />
             <ModelSelect />
+            <hr />
+            <label>x: {x}</label>
+            <hr />
+            <label>y: {y}</label>
+            <hr />
+            <label>z: {z}<br />
+                <input type="range" value={z} 
+                    min={-100} max={100}
+                    onChange={e => setZ(Number.parseFloat(e.target.value))} 
+                    style={{ width: sliderWidth }} />
+            </label>
+            <hr />
+            <label>rotX: {rotX.toFixed(3)}</label>
+            <hr />
+            <label>rotY: {rotY.toFixed(3)}</label>
+            <hr />
+            <div>
+                <span style={{ width: 300, display: "inline-block" }}>
+                    fov: {myMath.rad2deg(fov).toFixed(1)}°
+                    (
+                    rad: {(fov).toFixed(3)},
+                    π: {(fov / Math.PI).toFixed(3)}
+                    )
+                </span>
+                <input type="range" value={myMath.rad2deg(fov)}
+                    min={10} max={120} 
+                    onChange={(e) => setFov(deg2rad(Number.parseFloat(e.target.value)))}
+                    style={{ width: sliderWidth }} />
+            </div>
+            <hr />
+            <label>
+                near clip: {near} <br />
+                <input type="range" value={near}
+                    onChange={e => setNear(Number.parseFloat(e.target.value))} min={-10} max={50}
+                    style={{ width: sliderWidth }} />
+            </label>
+            <hr />
+            <label>far clip: {far} <br />
+                <input type="range" value={far}
+                    onChange={e => setFar(Number.parseFloat(e.target.value))}
+                    min={-100} max={200}
+                    style={{ width: sliderWidth }} />
+            </label>
         </div>
     </>);
 }
 
 function ModelSelect() {
-    const [model, SetModel] = useState(renderOpts.initialModel);
+    const [model, SetModel] = useState(renderParams.initialModel);
 
     function onModelSelected(event) {
         const value = Number.parseInt(event.target.value);
         SetModel(value);
         const item = modelOptions.get(value)!;
         item.vectors().then(function (x) {
-                renderOpts.loadedVectors = x;
-                renderFrame();
-            });
+            renderParams.loadedVectors = x;
+            drawFrame();
+        });
     }
 
     return (
@@ -241,60 +239,42 @@ function startRender(canvas: HTMLCanvasElement) {
 async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
     do {
         const start = performance.now();
-        render(context, renderOpts);
+        draw(context, renderParams);
         const duration = performance.now() - start;
         await delay(Math.max(0, minFrameDuration - duration));
     }
     while (runRenderLoop)
 }
 
-function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
+function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
     const start = performance.now();
 
     ctx.clearRect(-2, -2, 4, 4);
 
-    const camProjection = noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
-    const modelViewProj = noopProjection();
+    const state = renderParams.state;
+
+    // const camProjection = noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
+    // const camProjection = MDN.proj noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
+    // const modelViewProj = noopProjection();
+
+    const modelTransform = mdn2Mat4(MDN.multiplyArrayOfMatrices([
+        MDN.translateMatrix(state.x, state.y, state.z), // step 4
+        MDN.rotateYMatrix(state.rotY), // step 3
+        MDN.rotateXMatrix(state.rotX), // step 2
+        MDN.scaleMatrix(5, 5, 5)     // step 1
+    ]));
+
+    const perspectiveProjection = mdn2Mat4(MDN.perspectiveMatrix(state.fov, 1, state.near, state.far));
 
     let vectors = options.loadedVectors;
-    const phiDeg = Date.now() / 100 % 360;
-    const phiRad = rad(phiDeg);
-    // // vectors = transformEx(vectors, scale(2, 2, 2));
-    // //vectors = transform(vectors, rotateY(phiRad*3));
-    // vectors = transformEx(vectors, rotateY(renderOpts.rotationHorizontal));
-    // vectors = transformEx(vectors, rotateX(renderOpts.rotationVertical));
-    // //vectors = transform(vectors, rotateX(phiRad + 0.5));
-    // //vectors = transform(vectors, rotateZ(phiRad + 0.1));
-    // // vectors = transform(vectors, rotateX(-0.3));
-    // // vectors = transform(vectors, rotateZ(0));
-    // // vectors = transformEx(vectors, translate(0, 0, -3))
-    // vectors = transformEx(vectors, translate(renderOpts.x, 0, renderOpts.z));
 
-    vectors = vectors.map(x => {
-        return multiMul([
-            //scale(0.5, 0.5, 0.5),
-            rotateY(renderOpts.rotationHorizontal),
-            rotateX(renderOpts.rotationVertical),
-            translate(renderOpts.x, 0, renderOpts.z),
-            //cameraProjection()
-        ], x);
-    });
-    
-    console.log(vectors);
-
-    const light: VertexEx = transformEx([options.light], camProjection)[0];
-
-    const transformations = [
-        scale(0.2, 0.2, 0.2),
-        rotateY(phiRad * 3),
-        camProjection,
-        modelViewProj
-    ];
+    console.log(vectors.map(x => x.position));
+    console.log(JSON.stringify(vectors.map(x => x.position)));
 
     const vertexShaderOut: VertexEx[] = [];
 
     for (const v_in of vectors) {
-        const v_out = vertexShader(v_in, camProjection, modelViewProj);
+        const v_out = vertexShader(v_in, perspectiveProjection, modelTransform);
         vertexShaderOut.push(v_out);
     }
 
@@ -334,10 +314,12 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const gradient = false;
         if (!!options.wireframe) {
+            console.log("wireframe");
             ctx.strokeStyle = "darkgray";
             ctx.lineWidth = 0.01;
             ctx.stroke();
-        } else if(gradient) {
+        } else if (gradient) {
+            console.log("gradient");
 
             // fill with black
             ctx.fillStyle = "black";
@@ -349,11 +331,11 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
             const grd1 = ctx.createRadialGradient(v1.position.x, -v1.position.y, 0, v1.position.x, -v1.position.y, radius);
             grd1.addColorStop(0, toRgb(v1.color, 1));
             grd1.addColorStop(1, toRgb(v1.color, 0));
-    
+
             const grd2 = ctx.createRadialGradient(v2.position.x, -v2.position.y, 0, v2.position.x, -v2.position.y, radius);
             grd2.addColorStop(0, toRgb(v2.color, 1));
             grd2.addColorStop(1, toRgb(v2.color, 0));
-    
+
             const grd3 = ctx.createRadialGradient(v3.position.x, -v3.position.y, 0, v3.position.x, -v3.position.y, radius);
             grd3.addColorStop(0, toRgb(v3.color, 1));
             grd3.addColorStop(1, toRgb(v3.color, 0));
@@ -367,8 +349,9 @@ function render(ctx: CanvasRenderingContext2D, options: RenderOptions) {
             ctx.fillStyle = grd3;
             ctx.fill();
         } else {
-            const lightAngle = angle(v1.normal, light.normal)
-            ctx.fillStyle = `hsl(48 100% ${lightAngle/Math.PI * 100}%)`;
+            console.log("fallback", v1.color);
+            // const lightAngle = angle(v1.normal, light.normal)
+            ctx.fillStyle = `rgb(${v1.color?.[0]} ${v1.color?.[1]} ${v1.color?.[2]})`;
             ctx.fill();
         }
     }
@@ -416,9 +399,19 @@ function drawCrossbarWindow(ctx: CanvasRenderingContext2D) {
 
 function vertexShader(vec: VertexEx, projectionMatrix: Mat4, modelViewMatrix: Mat4): VertexEx {
     const res = multiMul([projectionMatrix, modelViewMatrix], vec);
+    console.log("vertexShader: in -> out", vec.position, res.position);
     return {
         position: res.position,
         normal: myMath.unit(vec.normal),
         color: vec.color
     };
+}
+
+function mdn2Mat4(m: Float16) : Mat4 {
+    return [
+        m.slice(0, 4) as myMath.Vec4,
+        m.slice(4, 8) as myMath.Vec4,
+        m.slice(8, 12) as myMath.Vec4,
+        m.slice(12, 16) as myMath.Vec4,
+    ]
 }

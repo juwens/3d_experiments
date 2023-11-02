@@ -142,15 +142,21 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
 
         const res: VertexEx[] = [];
 
-        for (let i = 0; i < vertices.length; i += 3) {
+        for (let i = 0; i < vertices.length; i += 4) {
             const v1 = vertices[i];
             const v2 = vertices[i + 1];
             const v3 = vertices[i + 2];
+            const v4 = vertices[i + 3];
             const norm = normal(v1.v, v2.v, v3.v);
             res.push({ position: v1.v, normal: norm, color: v1.c });
             res.push({ position: v2.v, normal: norm, color: v2.c });
             res.push({ position: v3.v, normal: norm, color: v3.c });
+            res.push({ position: v1.v, normal: norm, color: v1.c });
+            res.push({ position: v2.v, normal: norm, color: v2.c });
+            res.push({ position: v4.v, normal: norm, color: v4.c });
         }
+
+        console.log("Cube_from_mdn", res);
 
         x(res);
     });

@@ -165,11 +165,11 @@ export function median(list: number[]) {
     return sorted[Math.floor(sorted.length / 2)];
 }
 
-export function rad(deg: number): number {
+export function deg2rad(deg: number): number {
     return deg / 360 * Math.PI * 2;
 }
 
-export function deg(rad: number): number {
+export function rad2deg(rad: number): number {
     return rad / Math.PI / 2 * 360;
 }
 
