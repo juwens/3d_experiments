@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, deg2rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA, round3 } from "./math";
 import * as myMath from "./math";
-import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./modelLoader";
+import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec, vecF4 } from "./modelLoader";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -115,9 +115,9 @@ function MyApp() {
             <label>y: {y}</label>
             <hr />
             <label>z: {z}<br />
-                <input type="range" value={z} 
+                <input type="range" value={z}
                     min={-100} max={100}
-                    onChange={e => setZ(Number.parseFloat(e.target.value))} 
+                    onChange={e => setZ(Number.parseFloat(e.target.value))}
                     style={{ width: sliderWidth }} />
             </label>
             <hr />
@@ -134,7 +134,7 @@ function MyApp() {
                     )
                 </span>
                 <input type="range" value={myMath.rad2deg(fov)}
-                    min={10} max={120} 
+                    min={10} max={120}
                     onChange={(e) => setFov(deg2rad(Number.parseFloat(e.target.value)))}
                     style={{ width: sliderWidth }} />
             </div>
@@ -282,32 +282,16 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const angleToView = angle(v1.normal, options.view.normal);
 
-        console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
-
         // culling
         if (!options.wireframe && angleToView < halfPi) {
             continue;
         }
-
-        //const brightness = angle(vec.normal, light.normal) / Math.PI / 2;
-        // context.fillStyle = `hsl(48deg 100% ${(brightness * 130)}%)`;
 
         ctx.beginPath();
         ctx.moveTo(v1.position.x, -v1.position.y);
         ctx.lineTo(v2.position.x, -v2.position.y);
         ctx.lineTo(v3.position.x, -v3.position.y);
         ctx.closePath();
-
-        // if (v1.color !== undefined && v2.color !== undefined){
-        //     const gradient = context.createConicGradient(v1.position.x, -v1.position.y, v2.position.x, -v2.position.y);
-        //     const c1 = v1.color;
-        //     gradient.addColorStop(0, `rgb(${v1.color[0]}, ${v1.color[1]}, ${v1.color[2]})`);
-        //     gradient.addColorStop(1, `rgb(${v2.color![0] ?? "hotpink"}, ${v2.color![1]  ?? "hotpink"}, ${v2.color![2]  ?? "hotpink"})`);
-        //     context.strokeStyle = context.fillStyle = gradient;
-        // } else {
-        //     // context.strokeStyle = context.fillStyle = `rgb(${Math.abs(v2.position.x) * 255}, ${Math.abs(v2.normal.y * 255)}, ${Math.abs(v2.normal.z * 255)})`;
-        //     context.strokeStyle = context.fillStyle = "hotpink";
-        // }
 
         ctx.globalCompositeOperation = "source-over";
 
@@ -392,15 +376,17 @@ function drawCrossbarWindow(ctx: CanvasRenderingContext2D) {
     ctx.stroke();
 }
 
-function vertexShader(vec: VertexEx, projectionMatrix: Float16, modelViewMatrix: Float16): VertexEx {
+function vertexShader(vec_in: VertexEx, projectionMatrix: Float16, modelViewMatrix: Float16): VertexEx {
     const mat = MDN.multiplyMatrices(projectionMatrix, modelViewMatrix);
-    const p_in = vec.position;
+    const p_in = vec_in.position;
     const p_out = MDN.multiplyPoint(mat, [p_in.x, p_in.y, p_in.z, 1]);
-    console.log("vertexShader: in -> out", [p_in.x, p_in.y, p_in.z].map(round3), p_out.map(round3));
+    const n_in = vec_in.normal;
+    const n_out = MDN.multiplyPoint(mat, [n_in.x, n_in.y, n_in.z, 1]);
+    //console.log("vertexShader: in -> out", [p_in.x, p_in.y, p_in.z].map(round3), p_out.map(round3));
     const [x, y, z, w] = p_out;
     return {
-        position: {x: x/w, y:y/w, z: z/w},
-        normal: myMath.unit(vec.normal),
-        color: vec.color
+        position: vecF4(p_out),
+        normal: myMath.unit(vecF4(n_out)),
+        color: vec_in.color
     };
 }

@@ -56,6 +56,8 @@ export class MDN {
             [1.0, 0.3, 1.0, 1.0]     // Left face: purple
         ];
 
+        // length == 96, which is 24 * 4
+        // so it seemingly correlates to the indexes in the elements
         var colors: number[] = [];
 
         for (var j = 0; j < 6; j++) {
@@ -66,6 +68,8 @@ export class MDN {
             }
         }
 
+        console.assert(colors.length == (24 * 4));
+
         var elements = [
             0, 1, 2, 0, 2, 3,    // front
             4, 5, 6, 4, 6, 7,    // back
@@ -74,6 +78,8 @@ export class MDN {
             16, 17, 18, 16, 18, 19,   // right
             20, 21, 22, 20, 22, 23    // left
         ];
+
+        console.assert(elements.length == (6 * 6));
 
         return {
             positions: positions,

@@ -1,3 +1,4 @@
+import { Float4 } from "./common";
 import { Vertex, VertexEx, transformEx, translate, RGBA, unit, normal, Octal } from "./math";
 import { MDN } from "./MDN";
 
@@ -130,21 +131,21 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
 
         const vertices: { v: Vertex, c: RGBA }[] = [];
 
-        // numbers to vertices
-        for (let i = 0; i < data.elements.length; i++) {
-            const rowIdx = data.elements[i];
-            const offset = rowIdx*3;
-            const x = data.positions[offset];
-            const y = data.positions[offset + 1];
-            const z = data.positions[offset + 2];
-            const c = data.colors.slice(i, i+3);
-            const rgb = colorFromZeroToOne(c[0], c[1], c[2]);
-            const item = { v: vec(x, y, z), c: rgb };
-            console.log("vertices.push", rowIdx, [x,y,z]);
-            vertices.push(item);
+        for (let face = 0; face < 6; face++) {
+            for (let i = face * 6; i < ((face + 1) * 6); i++) {
+                const elmId = data.elements[i];
+                const offset = elmId * 3;
+                const x = data.positions[offset];
+                const y = data.positions[offset + 1];
+                const z = data.positions[offset + 2];
+                const c = data.colors.slice(elmId * 4, (elmId + 1) * 4);
+                const rgb = colorFromZeroToOne(c[0], c[1], c[2], c[3]);
+                const item = { v: vec(x, y, z), c: rgb };
+                //console.log("vertices.push", face, i, [x, y, z], rgb, c);
+                vertices.push(item);
+            }
         }
 
-        console.log("vertices", vertices.length, vertices.map(x => [x.v.x, x.v.y, x.v.z]));
         console.assert(vertices.length === 36);
 
         const res: VertexEx[] = [];
@@ -153,14 +154,13 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
             const v1 = vertices[i];
             const v2 = vertices[i + 1];
             const v3 = vertices[i + 2];
-            const v4 = vertices[i + 3];
             const norm = normal(v1.v, v2.v, v3.v);
             res.push({ position: v1.v, normal: norm, color: v1.c });
             res.push({ position: v2.v, normal: norm, color: v2.c });
             res.push({ position: v3.v, normal: norm, color: v3.c });
         }
 
-        console.log("Cube_from_mdn", res.map(x => x.position));
+        console.assert(res.length === 36);
 
         x(res);
     });
@@ -260,12 +260,21 @@ export function vec(x: number, y: number, z: number): Vertex {
     };
 }
 
-export function color(r: Octal, g: Octal, b: Octal): RGBA {
-    return [r, g, b];
+export function vecF4(v: Float4): Vertex {
+    const w = v[3];
+    return {
+        x: v[0] / w,
+        y: v[1] / w,
+        z: v[2] / w,
+    };
 }
 
-function colorFromZeroToOne(r: number, g: number, b: number) {
-    return color(toOctal(r * 255), toOctal(g * 255), toOctal(b * 255));
+export function color(r: Octal, g: Octal, b: Octal, a: Octal): RGBA {
+    return [r, g, b, a];
+}
+
+function colorFromZeroToOne(r: number, g: number, b: number, a: number) {
+    return color(toOctal(r * 255), toOctal(g * 255), toOctal(b * 255), toOctal(a * 255));
 }
 
 function toOctal(n: number): Octal {
