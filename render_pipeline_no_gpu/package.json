@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "npx esbuild src/main.tsx --bundle --watch --outfile=bin/main.js --servedir=bin",
+    "dev": "npx esbuild src/main.tsx --bundle --watch --outfile=wwwroot/main.js --sourcemap --servedir=wwwroot",
     "test": "vitest"
   },
   "author": "",

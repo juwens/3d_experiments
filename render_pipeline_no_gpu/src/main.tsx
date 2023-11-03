@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, deg2rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
+import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, deg2rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA, round3 } from "./math";
 import * as myMath from "./math";
 import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./modelLoader";
 import { delay } from "./util";
@@ -8,7 +8,7 @@ import * as uuid from "uuid";
 import * as wgr from "./webglRender"
 import { Models, RenderOptions, ModelsMap, nullRefError, useRenderParamsStore as useRenderParamsStore, Float16 } from "./common";
 import * as inHdlr from "./inputHandler"
-import { MDN } from "./webglRender";
+import { MDN } from "./MDN";
 
 const runRenderLoop = false;
 
@@ -267,8 +267,8 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     let vectors = options.loadedVectors;
 
-    console.log(vectors.map(x => x.position));
-    console.log(JSON.stringify(vectors.map(x => x.position)));
+    //console.log(vectors.map(x => x.position));
+    //console.log(JSON.stringify(vectors.map(x => x.position)));
 
     const vertexShaderOut: VertexEx[] = [];
 
@@ -282,7 +282,7 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const angleToView = angle(v1.normal, options.view.normal);
 
-        //console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
+        console.log(`${angleToView.toFixed(6)}`, v1.position, v1.normal, options.view.normal);
 
         // culling
         if (!options.wireframe && angleToView < halfPi) {
@@ -313,13 +313,10 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
         const gradient = false;
         if (!!options.wireframe) {
-            console.log("wireframe");
             ctx.strokeStyle = "darkgray";
             ctx.lineWidth = 0.01;
             ctx.stroke();
         } else if (gradient) {
-            console.log("gradient");
-
             // fill with black
             ctx.fillStyle = "black";
             ctx.fill();
@@ -348,7 +345,6 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
             ctx.fillStyle = grd3;
             ctx.fill();
         } else {
-            console.log("fallback", v1.color);
             // const lightAngle = angle(v1.normal, light.normal)
             ctx.fillStyle = `rgb(${v1.color?.[0]} ${v1.color?.[1]} ${v1.color?.[2]})`;
             ctx.fill();
@@ -398,10 +394,10 @@ function drawCrossbarWindow(ctx: CanvasRenderingContext2D) {
 
 function vertexShader(vec: VertexEx, projectionMatrix: Float16, modelViewMatrix: Float16): VertexEx {
     const mat = MDN.multiplyMatrices(projectionMatrix, modelViewMatrix);
-    const p = vec.position;
-    const res = MDN.multiplyPoint(mat, [p.x, p.y, p.z, 1]);
-    console.log("vertexShader: in -> out", vec.position, res);
-    const [x, y, z, w] = res;
+    const p_in = vec.position;
+    const p_out = MDN.multiplyPoint(mat, [p_in.x, p_in.y, p_in.z, 1]);
+    console.log("vertexShader: in -> out", [p_in.x, p_in.y, p_in.z].map(round3), p_out.map(round3));
+    const [x, y, z, w] = p_out;
     return {
         position: {x: x/w, y:y/w, z: z/w},
         normal: myMath.unit(vec.normal),

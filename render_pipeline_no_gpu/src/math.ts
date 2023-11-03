@@ -346,3 +346,13 @@ export function normal(a: Vertex, b: Vertex, c: Vertex): Vertex {
     const v = sub(c, a);
     return crossProd(u, v);
 }
+
+
+export function round3(value) {
+    return round(value, 3);
+}
+
+export function round(value, decimalPlaces) {
+    const multiplier = Math.pow(10, decimalPlaces);
+    return Math.round(value * multiplier) / multiplier;
+}

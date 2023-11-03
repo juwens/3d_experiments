@@ -131,18 +131,25 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
         const vertices: { v: Vertex, c: RGBA }[] = [];
 
         // numbers to vertices
-        for (let i = 0; i < data.elements.length; i += 3) {
-            const x = data.positions[i];
-            const y = data.positions[i + 1];
-            const z = data.positions[i + 2];
+        for (let i = 0; i < data.elements.length; i++) {
+            const rowIdx = data.elements[i];
+            const offset = rowIdx*3;
+            const x = data.positions[offset];
+            const y = data.positions[offset + 1];
+            const z = data.positions[offset + 2];
             const c = data.colors.slice(i, i+3);
             const rgb = colorFromZeroToOne(c[0], c[1], c[2]);
-            vertices.push({ v: vec(x, y, z), c: rgb });
+            const item = { v: vec(x, y, z), c: rgb };
+            console.log("vertices.push", rowIdx, [x,y,z]);
+            vertices.push(item);
         }
+
+        console.log("vertices", vertices.length, vertices.map(x => [x.v.x, x.v.y, x.v.z]));
+        console.assert(vertices.length === 36);
 
         const res: VertexEx[] = [];
 
-        for (let i = 0; i < vertices.length; i += 4) {
+        for (let i = 0; i < vertices.length; i += 3) {
             const v1 = vertices[i];
             const v2 = vertices[i + 1];
             const v3 = vertices[i + 2];
@@ -151,12 +158,9 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
             res.push({ position: v1.v, normal: norm, color: v1.c });
             res.push({ position: v2.v, normal: norm, color: v2.c });
             res.push({ position: v3.v, normal: norm, color: v3.c });
-            // res.push({ position: v1.v, normal: norm, color: v1.c });
-            // res.push({ position: v2.v, normal: norm, color: v2.c });
-            // res.push({ position: v4.v, normal: norm, color: v4.c });
         }
 
-        console.log("Cube_from_mdn", res);
+        console.log("Cube_from_mdn", res.map(x => x.position));
 
         x(res);
     });
