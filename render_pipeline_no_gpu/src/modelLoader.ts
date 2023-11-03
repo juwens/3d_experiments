@@ -1,5 +1,5 @@
 import { Vertex, VertexEx, transformEx, translate, RGBA, unit, normal, Octal } from "./math";
-import { MDN } from "./webglRender";
+import { MDN } from "./MDN";
 
 const cos = Math.cos;
 const sin = Math.sin;
