@@ -235,7 +235,7 @@ export class MDN {
         return "matrix3d(" + array.join(',') + ")";
     }
 
-    public static multiplyPoint(matrix, point) : Float4 {
+    public static multiplyPoint(matrix : Float16, point : Float4) : Float4 {
         var x = point[0], y = point[1], z = point[2], w = point[3];
 
         var c1r1 = matrix[0], c2r1 = matrix[1], c3r1 = matrix[2], c4r1 = matrix[3],
@@ -290,7 +290,7 @@ export class MDN {
         return result;
     }
 
-    public static multiplyArrayOfMatrices(matrices) {
+    public static multiplyArrayOfMatrices(matrices : Float16[]) : Float16 {
         var inputMatrix = matrices[0];
 
         for (var i = 1; i < matrices.length; i++) {

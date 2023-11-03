@@ -151,9 +151,9 @@ export function Cube_from_mdn(): Promise<VertexEx[]> {
             res.push({ position: v1.v, normal: norm, color: v1.c });
             res.push({ position: v2.v, normal: norm, color: v2.c });
             res.push({ position: v3.v, normal: norm, color: v3.c });
-            res.push({ position: v1.v, normal: norm, color: v1.c });
-            res.push({ position: v2.v, normal: norm, color: v2.c });
-            res.push({ position: v4.v, normal: norm, color: v4.c });
+            // res.push({ position: v1.v, normal: norm, color: v1.c });
+            // res.push({ position: v2.v, normal: norm, color: v2.c });
+            // res.push({ position: v4.v, normal: norm, color: v4.c });
         }
 
         console.log("Cube_from_mdn", res);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Mat4, VertexEx, mean, median, mul as multiMul, noopProjection, deg2rad, rotateX, rotateY, scale, transformEx, translate, angle, RGBA } from "./math";
 import * as myMath from "./math";
-import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./models";
+import { Cube_from_mdn, Cube_old, Sphere, Teapot_150k, Teapot_19k, Teapot_3k, Triangle, vec } from "./modelLoader";
 import { delay } from "./util";
 import { createRoot } from 'react-dom/client';
 import * as uuid from "uuid";
@@ -214,7 +214,6 @@ class PerformanceCounter {
 const perf = new PerformanceCounter();
 
 const halfPi = Math.PI / 2;
-const quaterPi = Math.PI / 4;
 const frameCap = 30;
 const minFrameDuration = 1000 / frameCap;
 
@@ -233,10 +232,10 @@ function startRender(canvas: HTMLCanvasElement) {
     const scale = 0.45;
     ctx.scale(canvas.width * scale, canvas.height * scale);
     ctx.fillRect(-1, -1, 2, 2);
-    renderLoop(canvas, ctx);
+    renderLoop(ctx);
 }
 
-async function renderLoop(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
+async function renderLoop(context: CanvasRenderingContext2D) {
     do {
         const start = performance.now();
         draw(context, renderParams);
@@ -257,14 +256,14 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
     // const camProjection = MDN.proj noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
     // const modelViewProj = noopProjection();
 
-    const modelTransform = mdn2Mat4(MDN.multiplyArrayOfMatrices([
+    const modelTransform = MDN.multiplyArrayOfMatrices([
         MDN.translateMatrix(state.x, state.y, state.z), // step 4
         MDN.rotateYMatrix(state.rotY), // step 3
         MDN.rotateXMatrix(state.rotX), // step 2
         MDN.scaleMatrix(5, 5, 5)     // step 1
-    ]));
+    ]);
 
-    const perspectiveProjection = mdn2Mat4(MDN.perspectiveMatrix(state.fov, 1, state.near, state.far));
+    const perspectiveProjection = MDN.perspectiveMatrix(state.fov, 1, state.near, state.far);
 
     let vectors = options.loadedVectors;
 
@@ -397,21 +396,15 @@ function drawCrossbarWindow(ctx: CanvasRenderingContext2D) {
     ctx.stroke();
 }
 
-function vertexShader(vec: VertexEx, projectionMatrix: Mat4, modelViewMatrix: Mat4): VertexEx {
-    const res = multiMul([projectionMatrix, modelViewMatrix], vec);
-    console.log("vertexShader: in -> out", vec.position, res.position);
+function vertexShader(vec: VertexEx, projectionMatrix: Float16, modelViewMatrix: Float16): VertexEx {
+    const mat = MDN.multiplyMatrices(projectionMatrix, modelViewMatrix);
+    const p = vec.position;
+    const res = MDN.multiplyPoint(mat, [p.x, p.y, p.z, 1]);
+    console.log("vertexShader: in -> out", vec.position, res);
+    const [x, y, z, w] = res;
     return {
-        position: res.position,
+        position: {x: x/w, y:y/w, z: z/w},
         normal: myMath.unit(vec.normal),
         color: vec.color
     };
-}
-
-function mdn2Mat4(m: Float16) : Mat4 {
-    return [
-        m.slice(0, 4) as myMath.Vec4,
-        m.slice(4, 8) as myMath.Vec4,
-        m.slice(8, 12) as myMath.Vec4,
-        m.slice(12, 16) as myMath.Vec4,
-    ]
 }

@@ -1,5 +1,5 @@
 import { VertexEx, rotateX } from "./math";
-import { vec } from "./models";
+import { vec } from "./modelLoader";
 import * as z from "zustand";
 
 

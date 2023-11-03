@@ -1,7 +1,7 @@
 // sum.test.js
 import { describe, expect, test } from 'vitest'
 import * as math from './math'
-import { vec } from './models';
+import { vec } from './modelLoader';
 import { mulMat4, unit } from './math';
 
 test('length(vector)', () => {
