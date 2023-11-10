@@ -300,11 +300,13 @@ export function mulMat4(m1: Mat4, m2: Mat4): Mat4 {
 }
 
 export function angle(a: Vertex, b: Vertex) {
-    return Math.acos(
+    const phi = Math.acos(
         dotProd(a, b)
         /
         (length(a) * length(b))
-    )
+        );
+    console.log(a, b, phi);
+    return phi;
 }
 
 export function dotProd(a: Vertex, b: Vertex): number {

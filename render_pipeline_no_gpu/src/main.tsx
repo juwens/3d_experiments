@@ -252,10 +252,6 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     const state = renderParams.state;
 
-    // const camProjection = noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
-    // const camProjection = MDN.proj noopProjection();//myMath.orhto(120/180 * Math.PI, -5, 5);
-    // const modelViewProj = noopProjection();
-
     const modelTransform = MDN.multiplyArrayOfMatrices([
         MDN.translateMatrix(state.x, state.y, state.z), // step 4
         MDN.rotateYMatrix(state.rotY), // step 3
@@ -265,22 +261,23 @@ function draw(ctx: CanvasRenderingContext2D, options: RenderOptions) {
 
     const perspectiveProjection = MDN.perspectiveMatrix(state.fov, 1, state.near, state.far);
 
-    let vectors = options.loadedVectors;
-
     //console.log(vectors.map(x => x.position));
-    //console.log(JSON.stringify(vectors.map(x => x.position)));
+    //console.log(JSON.stringify(options.loadedVectors.map(x => x.position)));
 
     const vertexShaderOut: VertexEx[] = [];
 
-    for (const v_in of vectors) {
+    for (const v_in of options.loadedVectors) {
         const v_out = vertexShader(v_in, perspectiveProjection, modelTransform);
         vertexShaderOut.push(v_out);
     }
 
+    const viewProjected = vertexShader(options.view, perspectiveProjection, modelTransform);
+    console.log(viewProjected);
     for (let i = 0; i < vertexShaderOut.length; i += 3) {
         const [v1, v2, v3] = vertexShaderOut.slice(i, i + 3);
 
-        const angleToView = angle(v1.normal, options.view.normal);
+        const angleToView = angle(v1.normal, viewProjected.normal);
+        console.log(v1, v2,v3, angleToView);
 
         // culling
         if (!options.wireframe && angleToView < halfPi) {
@@ -383,7 +380,6 @@ function vertexShader(vec_in: VertexEx, projectionMatrix: Float16, modelViewMatr
     const n_in = vec_in.normal;
     const n_out = MDN.multiplyPoint(mat, [n_in.x, n_in.y, n_in.z, 1]);
     //console.log("vertexShader: in -> out", [p_in.x, p_in.y, p_in.z].map(round3), p_out.map(round3));
-    const [x, y, z, w] = p_out;
     return {
         position: vecF4(p_out),
         normal: myMath.unit(vecF4(n_out)),
