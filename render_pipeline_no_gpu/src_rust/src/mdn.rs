@@ -1,7 +1,9 @@
+use web_sys::{WebGlRenderingContext, WebGlBuffer};
+
 pub struct CubeData {
-    pub positions: Vec<f64>,
+    pub positions: Vec<f32>,
     pub elements: Vec<i32>,
-    pub colors: Vec<f64>,
+    pub colors: Vec<f32>,
 }
 
 pub fn create_cube_data() -> CubeData {
@@ -43,7 +45,7 @@ pub fn create_cube_data() -> CubeData {
         -1.0, 1.0, -1.0
     ];
 
-    let colors_of_faces: [[f64; 4]; 6] = [
+    let colors_of_faces: [[f32; 4]; 6] = [
         [0.3, 1.0, 1.0, 1.0],    // Front face: cyan
         [1.0, 0.3, 0.3, 1.0],    // Back face: red
         [0.3, 1.0, 0.3, 1.0],    // Top face: green
@@ -54,7 +56,7 @@ pub fn create_cube_data() -> CubeData {
 
     // length == 96, which is 24 * 4 = 6 (faces) * 4 (v per face) * 4 (num per color)
     // so it seemingly correlates to the indexes in the elements
-    let mut colors: Vec<f64> = Vec::new();
+    let mut colors: Vec<f32> = Vec::new();
 
     for face_color in colors_of_faces {
         for _ in 0..4 {
@@ -85,44 +87,61 @@ pub fn create_cube_data() -> CubeData {
 }
 
 
-// import { Float16, Float4, nullRefError } from "./common";
+pub struct CreateBufferResult {
+    pub positions: WebGlBuffer,
+    pub colors:  WebGlBuffer,
+    pub elements:  WebGlBuffer,
+    pub n_elements: usize,
+}
 
-// export interface CreateBufferResult {
-//     positions: WebGLBuffer;
-//     colors: WebGLBuffer;
-//     elements: WebGLBuffer;
-//     elementsCount: number;
-// };
-// export class MDN {
+// https://github.com/rustwasm/wasm-bindgen/blob/main/examples/webgl/src/lib.rs#L44
+pub fn create_buffers_for_cube(gl: &WebGlRenderingContext, cube: CubeData) -> CreateBufferResult {
+    
+    let positions = gl.create_buffer();
+    gl.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, positions.as_ref());
+    gl.buffer_data_with_array_buffer_view(
+        WebGlRenderingContext::ARRAY_BUFFER,
+        &view_f32(cube.positions),
+        WebGlRenderingContext::STATIC_DRAW
+    );
 
-//     // Take the data for a cube and bind the buffers for it.
-//     // Return an object collection of the buffers
-//     public static createBuffersForCube(gl: WebGLRenderingContext, cube: { positions: number[]; elements: number[]; colors: number[]; }): CreateBufferResult {
-//         const positions = gl.createBuffer() || nullRefError();
-//         gl.bindBuffer(gl.ARRAY_BUFFER, positions);
-//         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.positions), gl.STATIC_DRAW);
+    let colors = gl.create_buffer();
+    gl.bind_buffer(WebGlRenderingContext::ARRAY_BUFFER, colors.as_ref());
+    gl.buffer_data_with_array_buffer_view(
+            WebGlRenderingContext::ARRAY_BUFFER,
+            &view_f32(cube.colors),
+            WebGlRenderingContext::STATIC_DRAW);
 
-//         const colors = gl.createBuffer() || nullRefError();
-//         gl.bindBuffer(gl.ARRAY_BUFFER, colors);
-//         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cube.colors), gl.STATIC_DRAW);
+    let elements = gl.create_buffer();
+    let n_elements = cube.elements.len();
+    gl.bind_buffer(WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, elements.as_ref());
+    gl.buffer_data_with_array_buffer_view(
+        WebGlRenderingContext::ELEMENT_ARRAY_BUFFER, 
+        &view_i32(cube.elements), 
+        WebGlRenderingContext::STATIC_DRAW);
 
-//         const elements = gl.createBuffer() || nullRefError();
-//         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
-//         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cube.elements), gl.STATIC_DRAW);
+    return CreateBufferResult {
+        positions: positions.unwrap(),
+        colors: colors.unwrap(),
+        elements: elements.unwrap(),
+        n_elements,
+    };
+    
+    fn view_f32(mut vec : Vec<f32>) -> js_sys::Float32Array {
+        unsafe {
+            return js_sys::Float32Array::view_mut_raw(vec.as_mut_ptr(), vec.len());
+        }
+    }
+    
+    fn view_i32(mut vec : Vec<i32>) -> js_sys::Int32Array {
+        unsafe {
+            return js_sys::Int32Array::view_mut_raw(vec.as_mut_ptr(), vec.len());
+        }
+    }
+}
 
-//         return {
-//             positions: positions,
-//             colors: colors,
-//             elements: elements,
-//             elementsCount: cube.elements.length,
-//         }
-//     }
 
-//     public static matrixArrayToCssMatrix(array) {
-//         return "matrix3d(" + array.join(',') + ")";
-//     }
-
-//     public static multiplyPoint(matrix : Float16, point : Float4) : Float4 {
+//     pub fn multiplyPoint(matrix : Float16, point : Float4) : Float4 {
 //         var x = point[0], y = point[1], z = point[2], w = point[3];
 
 //         var c1r1 = matrix[0], c2r1 = matrix[1], c3r1 = matrix[2], c4r1 = matrix[3],
@@ -137,6 +156,11 @@ pub fn create_cube_data() -> CubeData {
 //             x * c4r1 + y * c4r2 + z * c4r3 + w * c4r4
 //         ];
 //     }
+
+
+// import { Float16, Float4, nullRefError } from "./common";
+
+// export class MDN {
 
 //     public static multiplyMatrices(a: Float16, b: Float16): Float16 {
 //         // TODO - Simplify for explanation
