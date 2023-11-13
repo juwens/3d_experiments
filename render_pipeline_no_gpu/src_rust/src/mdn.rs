@@ -1,4 +1,4 @@
-use cgmath::{Matrix3, Angle, Matrix4};
+use cgmath::Matrix4;
 use web_sys::{WebGlRenderingContext, WebGlBuffer, WebGlShader, WebGlProgram};
 
 pub struct CubeData {
